@@ -247,9 +247,8 @@ def runManualMode(SETINFO):
     if SETINFO == 'on': return True
     else: return False
                 
-def runPeriodictMode(_SETINFO):
+def runPeriodictMode(SETINFO):
     # "SETINFO": {"START_DT": "20220909", "REPEAT_DAY": "15", "START_TIME": "0030", "END_TIME": "0100"}}
-    SETINFO = json.loads(_SETINFO)
     scheduled_date = datetime.datetime.strptime(SETINFO['START_DT'], '%Y%m%d').replace(tzinfo=datetime.timezone(datetime.timedelta(hours=9)))
     now = datetime.datetime.now(tz=datetime.timezone(datetime.timedelta(hours=9)))
     diff = now - scheduled_date
