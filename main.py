@@ -458,7 +458,7 @@ async def recv_handler(ws):
                 if os.path.isfile(path_src):
                     shutil.move(path_src, path_dest)
                 
-                await asyncio.sleep(20)
+                await asyncio.sleep(10)
 
                 params = {
                     "METHOD": "OTA",
