@@ -246,7 +246,7 @@ def runManualMode(SETINFO):
     if SETINFO == 'on': return True
     else: return False
                 
-def runRepeatMode(_SETINFO):
+def runPeriodictMode(_SETINFO):
     # "SETINFO": {"START_DT": "20220909", "REPEAT_DAY": "15", "START_TIME": "0030", "END_TIME": "0100"}}
     SETINFO = json.loads(_SETINFO)
     scheduled_date = datetime.datetime.strptime(SETINFO['START_DT'], '%Y%m%d').replace(tzinfo=datetime.timezone(datetime.timedelta(hours=9)))
@@ -259,7 +259,7 @@ def runRepeatMode(_SETINFO):
 
     return False
 
-def runWeekMode(SETINFO):
+def runWeeklyRepeatMode(SETINFO):
     # "SETINFO": [{"WEEK_INFO": "1", "START_TIME": "0100", "END_TIME": "0200"}, {"WEEK_INFO": "2", "START_TIME": "0100", "END_TIME": "0200"}]
     # Mon(1), Tue(2), Wed(3), Thu(4), Fri(5), Sat(6), Sun(7)
     now = datetime.datetime.now(tz=datetime.timezone(datetime.timedelta(hours=9)))
@@ -298,11 +298,11 @@ def updateRelay():
             if relay['MODE'] == 'onoff':   # manual mode
                 result = runManualMode(relay['SETINFO'])
             
-            elif relay['MODE'] == 'week':   # week mode
-                result = runWeekMode(relay['SETINFO'])
+            elif relay['MODE'] == 'repeat':   # weekly repeat mode
+                result = runWeeklyRepeatMode(relay['SETINFO'])
 
-            elif relay['MODE'] == 'repeat': # repeat mode
-                result = runRepeatMode(relay['SETINFO'])
+            elif relay['MODE'] == 'week': # periodic mode
+                result = runPeriodictMode(relay['SETINFO'])
 
             if result:
                 if relay['RELAY'] == '1': GPIO.output(RELAY1_PIN, True)
@@ -347,7 +347,7 @@ async def send_sensor_data(ws):
                     print('[DB PUSH]', pData)
                     await ws.send(pData)
                     
-                if int(time.time()) - WEB_time_check > 1:   # web update per every 60 sec
+                if int(time.time()) - WEB_time_check > 60:   # web update per every 60 sec
                     WEB_time_check = int(time.time())
                     params = {
                         "METHOD": "SEND_F",
@@ -366,7 +366,7 @@ async def send_sensor_data(ws):
                     print('[WEB PUSH]', pData)
                     await ws.send(pData)
             else:
-                if int(time.time()) - WEB_time_check > 1:
+                if int(time.time()) - WEB_time_check > 1:   # DO NOT CHANGE THE VALUE
                     WEB_time_check = int(time.time())
                     print('Sensor Status False')
                 
@@ -428,10 +428,12 @@ async def recv_handler(ws):
                         RELAYS_PARAM[7] = json.dumps(relay)
                 saveParams(RELAYS_PARAM)
 
-            elif d['METHOD'] == 'SENSOR_YN':
+            elif d['METHOD'] == 'TOTAL_STATUS':
                 params = {
-                    "METHOD": "SENSOR_YN",
-                    "RESULT": SENSOR_STATUS
+                    "METHOD": "TOTAL_STATUS",
+                    "DEVICE_ID": setting_id,
+                    "SENSOR_STATUS": SENSOR_STATUS,
+                    "VERSION": VERSION
                 }
                 pData = json.dumps(params)
                 await ws.send(pData)
@@ -445,14 +447,6 @@ async def recv_handler(ws):
                 await ws.send(pData)
                 await asyncio.sleep(5)
                 os.system('shutdown -r now')
-
-            elif d['METHOD'] == 'VERSION':
-                params = {
-                    "METHOD": "VERSION",
-                    "RESULT": VERSION
-                }
-                pData = json.dumps(params)
-                await ws.send(pData)
             
             elif d['METHOD'] == 'OTA':
                 path = '/home/pi/Documents/main.py'
