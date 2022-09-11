@@ -495,5 +495,5 @@ async def main():
 
 def run():
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(ATMOV3.main())
+    loop.run_until_complete(main())
     loop.close()
