@@ -453,12 +453,10 @@ async def recv_handler(ws):
 
                 if os.path.isfile(path):
                     os.remove(path)
-                
-                await asyncio.sleep(2)
 
                 os.system('wget -P /home/pi/Documents/ https://raw.githubusercontent.com/picshbj/ATMOV3/main/main.py')
                 
-                await asyncio.sleep(5)
+                await asyncio.sleep(10)
 
                 params = {
                     "METHOD": "OTA",
