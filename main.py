@@ -24,7 +24,7 @@ Channel = CO2 = TVOC = PM25 = TEMP = HUMID = LIGHT = WATER1 = WATER2 = WATER3 = 
 SERVER_STATUS = True
 SENSOR_STATUS = False
 
-VERSION = '1.1'
+VERSION = '1.2'
 
 IS_PI = True
 
@@ -187,7 +187,7 @@ else:
         def input(pin):
             return 1
     
-    setting_id = ''
+    setting_id = '8d3cd'
     uri = 'ws://127.0.0.1/atmo_ws?%s' % (setting_id)
 
     async def reader():
@@ -454,8 +454,8 @@ async def recv_handler(ws):
                 if os.path.isfile(path):
                     os.remove(path)
 
-                os.system('wget -p /home/pi/Documents/ https://raw.githubusercontent.com/picshbj/ATMOV3/main/main.py')
-                os.system('mv /home/pi/Documents/raw.githubusercontent.com/picshbj/ATMOV3/main/main.py /home/pi/Documents/main.py')
+                os.system('wget -P /home/pi/Documents/ https://raw.githubusercontent.com/picshbj/ATMOV3/main/main.py')
+                
                 await asyncio.sleep(20)
 
                 params = {
