@@ -451,6 +451,12 @@ async def recv_handler(ws):
             elif d['METHOD'] == 'OTA':
                 os.system('wget -P /home/pi/ https://raw.githubusercontent.com/picshbj/ATMOV3/main/ATMOV3.py')
                 
+                path_src = '/home/pi/ATMOV3.py'
+                path_dest = '/home/pi/Documents/ATMOV3.py'
+
+                if os.path.isfile(path_src):
+                    shutil.move(path_src, path_dest)
+                
                 await asyncio.sleep(20)
 
                 params = {
