@@ -4,20 +4,8 @@ import asyncio
 import os
 import datetime
 import random
-import time
-
-while True:
-    try:
-        import serial_asyncio
-        print('serial_asyncio import succeed!')
-        break
-    except Exception as e:
-        print('This system has no serial_asyncio module..')
-        print('Installing serial_asyncio module..')
-        os.system('pip3 install pyserial-asyncio')
-        time.sleep(5)
+import time 
         
-
 RELAY1_PIN = 17
 RELAY2_PIN = 27
 RELAY3_PIN = 22
@@ -41,8 +29,18 @@ VERSION = '1.1'
 IS_PI = True
 
 if IS_PI:
-    import serial
     import RPi.GPIO as GPIO
+
+    while True:
+        try:
+            import serial_asyncio
+            print('serial_asyncio import succeed!')
+            break
+        except Exception as e:
+            print('This system has no serial_asyncio module..')
+            print('Installing serial_asyncio module..')
+            os.system('pip3 install pyserial-asyncio')
+            time.sleep(5)
 
     GPIO.setmode(GPIO.BCM)
     GPIO.setwarnings(False)
@@ -69,6 +67,8 @@ if IS_PI:
             setting_id = setting_id.replace('\n', '')
     f.close()
 
+    uri = 'ws://v3.atmo.kr/atmo_ws?%s' % (setting_id)
+
     f = open('/etc/xdg/lxsession/LXDE-pi/autostart','r')
     data = ''
     isChanged = False
@@ -89,13 +89,120 @@ if IS_PI:
         f.write(data)
         f.close()
         os.system('shutdown -r now')
+    
+    class InputChunkProtocol(asyncio.Protocol):
+        def __init__(self):
+            self.line = ''
+            self.serial_watchdog = 0
+            
+        def connection_made(self, transport):
+            self.transport = transport
+        
+        def data_received(self, data):
+            global Channel, CO2, TVOC, PM25, TEMP, HUMID, LIGHT, WATER1, WATER2, WATER3, SERVER_STATUS, SENSOR_STATUS
+            
+            if len(data) > 0:
+                self.line += str(data, 'utf-8')
+                            
+            if '{' in self.line and '}' in self.line:
+                line = self.line[self.line.find('{'):self.line.find('}')+1]
+                self.line = ''
+                print('[Sensor Data]', line)
+                try:
+                    if len(line) > 0:
+                        d = json.loads(line)
+                        Channel = d['CH']
+                        
+                        if int(Channel) == readDipSW():
+                            CO2 = int(d['CO2'])
+                            TVOC = int(d['TVOC'])
+                            PM25 = int(d['PM25'])
+                            TEMP = float(d['TEMP'])
+                            HUMID = float(d['HUMID'])
+                            LIGHT = int(d['LIGHT'])
+                            self.serial_watchdog = time.time()
+                            SENSOR_STATUS = True
+                        
+                except Exception as e:
+                    SERVER_STATUS = False
+                    print('Serial Error:', e)
+                
+            if time.time() - self.serial_watchdog > 10.0:
+                SENSOR_STATUS = False
+            
+            self.pause_reading()
+            
+        def pause_reading(self):
+            self.transport.pause_reading()
+            
+        def resume_reading(self):
+            self.transport.resume_reading()
+
+    async def reader():
+        global SERVER_STATUS
+        transport, protocol = await serial_asyncio.create_serial_connection(loop, InputChunkProtocol, '/dev/serial0', baudrate=9600)
+        
+        while True:
+            if not SERVER_STATUS: break
+            await asyncio.sleep(1)
+            try:
+                protocol.resume_reading()
+                
+            except Exception as e:
+                SERVER_STATUS = False
+                print('Serial Reader Error:', e)
+                
+        raise RuntimeError('Serial Read Error')    
 
 else:
-    import GPIO
+    class GPIO():
+        def output(pin, value):
+            if pin == 17:
+                print('RELAY1 set', value)
+            elif pin == 27:
+                print('RELAY2 set', value)
+            elif pin == 22:
+                print('RELAY3 set', value)
+            elif pin == 18:
+                print('RELAY4 set', value)
+            elif pin == 25:
+                print('RELAY5 set', value)
+            elif pin == 8:
+                print('RELAY6 set', value)
+            elif pin == 12:
+                print('RELAY7 set', value)
+            elif pin == 13:
+                print('RELAY8 set', value)
+            else:
+                print('Wrong pin number')
+        
+        def input(pin):
+            return 1
+    
     setting_id = ''
+    uri = 'ws://127.0.0.1/atmo_ws?%s' % (setting_id)
 
-# uri = 'ws://127.0.0.1/atmo_ws?%s' % (setting_id)
-uri = 'ws://v3.atmo.kr/atmo_ws?%s' % (setting_id)
+    async def reader():
+        global Channel, CO2, TVOC, PM25, TEMP, HUMID, LIGHT, WATER1, WATER2, WATER3, SERVER_STATUS, SENSOR_STATUS
+        
+        while True:
+            if not SERVER_STATUS: break
+            await asyncio.sleep(1)
+            try:
+                CO2 = random.randint(20,25)
+                TVOC = random.randint(100,110)
+                PM25 = random.randint(10,20)
+                TEMP = 26.6
+                HUMID = 54.2
+                LIGHT = random.randint(550,560)
+                SENSOR_STATUS = True
+
+            except Exception as e:
+                SERVER_STATUS = False
+                print('Serial Reader Error:', e)
+                
+        raise RuntimeError('Serial Read Error')
+
 
 
 def saveParams(RELAYS_PARAM):
@@ -364,71 +471,6 @@ async def recv_handler(ws):
             print('Recieve Error', e)
             
             
-class InputChunkProtocol(asyncio.Protocol):
-    def __init__(self):
-        self.line = ''
-        self.serial_watchdog = 0
-        
-    def connection_made(self, transport):
-        self.transport = transport
-    
-    def data_received(self, data):
-        global Channel, CO2, TVOC, PM25, TEMP, HUMID, LIGHT, WATER1, WATER2, WATER3, SERVER_STATUS, SENSOR_STATUS
-        
-        if len(data) > 0:
-            self.line += str(data, 'utf-8')
-                        
-        if '{' in self.line and '}' in self.line:
-            line = self.line[self.line.find('{'):self.line.find('}')+1]
-            self.line = ''
-            print('[Sensor Data]', line)
-            try:
-                if len(line) > 0:
-                    d = json.loads(line)
-                    Channel = d['CH']
-                    
-                    if int(Channel) == readDipSW():
-                        CO2 = int(d['CO2'])
-                        TVOC = int(d['TVOC'])
-                        PM25 = int(d['PM25'])
-                        TEMP = float(d['TEMP'])
-                        HUMID = float(d['HUMID'])
-                        LIGHT = int(d['LIGHT'])
-                        self.serial_watchdog = time.time()
-                        SENSOR_STATUS = True
-                    
-            except Exception as e:
-                SERVER_STATUS = False
-                print('Serial Error:', e)
-            
-        if time.time() - self.serial_watchdog > 10.0:
-            SENSOR_STATUS = False
-        
-        self.pause_reading()
-        
-    def pause_reading(self):
-        self.transport.pause_reading()
-        
-    def resume_reading(self):
-        self.transport.resume_reading()
-
-
-async def reader():
-    global SERVER_STATUS
-    transport, protocol = await serial_asyncio.create_serial_connection(loop, InputChunkProtocol, '/dev/serial0', baudrate=9600)
-    
-    while True:
-        if not SERVER_STATUS: break
-        await asyncio.sleep(1)
-        try:
-            protocol.resume_reading()
-            
-        except Exception as e:
-            SERVER_STATUS = False
-            print('Serial Reader Error:', e)
-            
-    raise RuntimeError('Serial Read Error')
-
 
 async def main():
     global SERVER_STATUS
