@@ -94,6 +94,7 @@ if IS_PI:
         def __init__(self):
             self.line = ''
             self.serial_watchdog = 0
+            self.watchdog_cnt = 0
             
         def connection_made(self, transport):
             self.transport = transport
@@ -103,8 +104,9 @@ if IS_PI:
             
             if len(data) > 0:
                 self.line += str(data, 'utf-8')
+            print('\n[Sensor sData]', self.line)
                             
-            if '{' in self.line and '}' in self.line:
+            if ('{' in self.line and '}' in self.line) and (self.line.find('{') < self.line.find('}')):
                 line = self.line[self.line.find('{'):self.line.find('}')+1]
                 self.line = ''
                 print('[Sensor Data]', line)
@@ -122,13 +124,19 @@ if IS_PI:
                             LIGHT = int(d['LIGHT'])
                             self.serial_watchdog = time.time()
                             SENSOR_STATUS = True
+                            self.watchdog_cnt = 0
                         
                 except Exception as e:
                     SERVER_STATUS = False
                     print('Serial Error:', e)
+            elif ('{' in self.line and '}' in self.line) and (self.line.find('{') > self.line.find('}')):
+                self.line = self.line[self.line.find('{'):]
                 
             if time.time() - self.serial_watchdog > 10.0:
                 SENSOR_STATUS = False
+                self.watchdog_cnt += 1
+                if self.watchdog_cnt > 10:
+                    SERVER_STATUS = False
             
             self.pause_reading()
             
