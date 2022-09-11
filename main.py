@@ -5,6 +5,7 @@ import os
 import datetime
 import random
 import time 
+import shutil
         
 RELAY1_PIN = 17
 RELAY2_PIN = 27
