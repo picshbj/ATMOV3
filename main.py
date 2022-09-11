@@ -449,10 +449,10 @@ async def recv_handler(ws):
                 os.system('shutdown -r now')
             
             elif d['METHOD'] == 'OTA':
-                os.system('wget -P /home/pi/ https://raw.githubusercontent.com/picshbj/ATMOV3/main/ATMOV3.py')
+                os.system('wget -P /home/pi/ https://raw.githubusercontent.com/picshbj/ATMOV3/main/main.py')
                 
-                path_src = '/home/pi/ATMOV3.py'
-                path_dest = '/home/pi/Documents/ATMOV3.py'
+                path_src = '/home/pi/main.py'
+                path_dest = '/home/pi/Documents/main.py'
 
                 if os.path.isfile(path_src):
                     shutil.move(path_src, path_dest)
