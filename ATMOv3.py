@@ -493,5 +493,7 @@ async def main():
             print('Main Error:', e)
             await asyncio.sleep(5)
 
-
-
+def run():
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(ATMOV3.main())
+    loop.close()
