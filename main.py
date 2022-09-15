@@ -25,7 +25,7 @@ Channel = CO2 = TVOC = PM25 = TEMP = HUMID = LIGHT = WATER1 = WATER2 = WATER3 = 
 SERVER_STATUS = True
 SENSOR_STATUS = False
 
-VERSION = '1.4'
+VERSION = '1.5'
 
 IS_PI = True
 
@@ -233,15 +233,77 @@ def saveParams(RELAYS_PARAM):
 def readParams():
     global RELAYS_PARAM
     RELAYS_PARAM = []
+    relay_list = [1,2,3,4,5,6,7,8]
     if os.path.exists('./saved.json'):
         with open('./saved.json', 'r', encoding='utf-8') as read_file:
             d = json.load(read_file)
             for relay in d['CONTROL']:
-                RELAYS_PARAM.append(json.dumps(relay))
+                j = json.dumps(relay)
+                jj = int(json.loads(j)["RELAY"])
+                relay_list.remove(jj)
+                RELAYS_PARAM.append(j)
+            
+            for relay in relay_list:
+                j = '''{"RELAY": "%d", "MODE": "onoff", "SETINFO": "off"}''' % (relay)
+                RELAYS_PARAM.append(j)
                 
     else:
-        RELAYS_PARAM = ['{"RELAY":"1", "MODE":"onoff", "SETINFO":"off"}', '{"RELAY":"2", "MODE":"onoff", "SETINFO":"off"}', '{"RELAY":"3", "MODE":"onoff", "SETINFO":"off"}', '{"RELAY":"4", "MODE":"onoff", "SETINFO":"off"}', '{"RELAY":"5", "MODE":"onoff", "SETINFO":"off"}', '{"RELAY":"6", "MODE":"onoff", "SETINFO":"off"}', '{"RELAY":"7", "MODE":"onoff", "SETINFO":"off"}', '{"RELAY":"8", "MODE":"onoff", "SETINFO":"off"}']
-    
+        pData = '''
+{
+	"CONTROL": [
+		{
+			"RELAY": "1",
+			"MODE": "onoff",
+			"SETINFO": "off"
+		},
+		{
+			"RELAY": "2",
+			"MODE": "onoff",
+			"SETINFO": "off"
+		},
+		{
+			"RELAY": "3",
+			"MODE": "onoff",
+			"SETINFO": "off"
+		},
+		{
+			"RELAY": "4",
+			"MODE": "onoff",
+			"SETINFO": "off"
+		},
+		{
+			"RELAY": "5",
+			"MODE": "onoff",
+			"SETINFO": "off"
+		},
+		{
+			"RELAY": "6",
+			"MODE": "onoff",
+			"SETINFO": "off"
+		},
+		{
+			"RELAY": "7",
+			"MODE": "onoff",
+			"SETINFO": "off"
+		},
+		{
+			"RELAY": "8",
+			"MODE": "onoff",
+			"SETINFO": "off"
+		}
+	]
+}
+'''
+        with open('./saved.json', 'w', encoding='utf-8') as save_file:
+            save_file.write(pData)
+        
+        with open('./saved.json', 'r', encoding='utf-8') as read_file:
+            d = json.load(read_file)
+            for relay in d['CONTROL']:
+                RELAYS_PARAM.append(json.dumps(relay))
+
+        # RELAYS_PARAM = ['{"RELAY":"1", "MODE":"onoff", "SETINFO":"off"}', '{"RELAY":"2", "MODE":"onoff", "SETINFO":"off"}', '{"RELAY":"3", "MODE":"onoff", "SETINFO":"off"}', '{"RELAY":"4", "MODE":"onoff", "SETINFO":"off"}', '{"RELAY":"5", "MODE":"onoff", "SETINFO":"off"}', '{"RELAY":"6", "MODE":"onoff", "SETINFO":"off"}', '{"RELAY":"7", "MODE":"onoff", "SETINFO":"off"}', '{"RELAY":"8", "MODE":"onoff", "SETINFO":"off"}']
+
 
 def runManualMode(SETINFO):
     if SETINFO == 'on': return True
