@@ -25,7 +25,7 @@ Channel = CO2 = TVOC = PM25 = TEMP = HUMID = LIGHT = WATER1 = WATER2 = WATER3 = 
 SERVER_STATUS = True
 SENSOR_STATUS = False
 
-VERSION = '1.3'
+VERSION = '1.4'
 
 IS_PI = True
 
@@ -220,10 +220,10 @@ def saveParams(RELAYS_PARAM):
                     json.loads(RELAYS_PARAM[1]),
                     json.loads(RELAYS_PARAM[2]),
                     json.loads(RELAYS_PARAM[3]),
-                    json.loads(RELAYS_PARAM[4])
-                    #json.loads(RELAYS_PARAM[5]),
-                    #json.loads(RELAYS_PARAM[6]),
-                    #json.loads(RELAYS_PARAM[7])
+                    json.loads(RELAYS_PARAM[4]),
+                    json.loads(RELAYS_PARAM[5]),
+                    json.loads(RELAYS_PARAM[6]),
+                    json.loads(RELAYS_PARAM[7])
                     ]
         }
     with open('./saved.json', 'w', encoding='utf-8') as make_file:
@@ -310,12 +310,18 @@ def updateRelay():
                 if relay['RELAY'] == '3': GPIO.output(RELAY3_PIN, True)
                 if relay['RELAY'] == '4': GPIO.output(RELAY4_PIN, True)
                 if relay['RELAY'] == '5': GPIO.output(RELAY5_PIN, True)
+                if relay['RELAY'] == '6': GPIO.output(RELAY6_PIN, True)
+                if relay['RELAY'] == '7': GPIO.output(RELAY7_PIN, True)
+                if relay['RELAY'] == '8': GPIO.output(RELAY8_PIN, True)
             else:
                 if relay['RELAY'] == '1': GPIO.output(RELAY1_PIN, False)
                 if relay['RELAY'] == '2': GPIO.output(RELAY2_PIN, False)
                 if relay['RELAY'] == '3': GPIO.output(RELAY3_PIN, False)
                 if relay['RELAY'] == '4': GPIO.output(RELAY4_PIN, False)
                 if relay['RELAY'] == '5': GPIO.output(RELAY5_PIN, False)
+                if relay['RELAY'] == '6': GPIO.output(RELAY6_PIN, True)
+                if relay['RELAY'] == '7': GPIO.output(RELAY7_PIN, True)
+                if relay['RELAY'] == '8': GPIO.output(RELAY8_PIN, True)
         print('-----------------------------------------------------\n')
     except Exception as e:
         print(e)
@@ -397,10 +403,10 @@ async def recv_handler(ws):
                             json.loads(RELAYS_PARAM[1]),
                             json.loads(RELAYS_PARAM[2]),
                             json.loads(RELAYS_PARAM[3]),
-                            json.loads(RELAYS_PARAM[4])
-                            #json.loads(RELAYS_PARAM[5]),
-                            #json.loads(RELAYS_PARAM[6]),
-                            #json.loads(RELAYS_PARAM[7])
+                            json.loads(RELAYS_PARAM[4]),
+                            json.loads(RELAYS_PARAM[5]),
+                            json.loads(RELAYS_PARAM[6]),
+                            json.loads(RELAYS_PARAM[7])
                         ]
                 }
                 pData = json.dumps(params)
