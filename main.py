@@ -25,7 +25,7 @@ Channel = CO2 = TVOC = PM25 = TEMP = HUMID = LIGHT = WATER1 = WATER2 = WATER3 = 
 SERVER_STATUS = True
 SENSOR_STATUS = False
 
-VERSION = '1.5'
+VERSION = '1.6'
 
 IS_PI = True
 
@@ -381,9 +381,9 @@ def updateRelay():
                 if relay['RELAY'] == '3': GPIO.output(RELAY3_PIN, False)
                 if relay['RELAY'] == '4': GPIO.output(RELAY4_PIN, False)
                 if relay['RELAY'] == '5': GPIO.output(RELAY5_PIN, False)
-                if relay['RELAY'] == '6': GPIO.output(RELAY6_PIN, True)
-                if relay['RELAY'] == '7': GPIO.output(RELAY7_PIN, True)
-                if relay['RELAY'] == '8': GPIO.output(RELAY8_PIN, True)
+                if relay['RELAY'] == '6': GPIO.output(RELAY6_PIN, False)
+                if relay['RELAY'] == '7': GPIO.output(RELAY7_PIN, False)
+                if relay['RELAY'] == '8': GPIO.output(RELAY8_PIN, False)
         print('-----------------------------------------------------\n')
     except Exception as e:
         print(e)
