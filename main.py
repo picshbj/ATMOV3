@@ -25,7 +25,7 @@ Channel = CO2 = TVOC = PM25 = TEMP = HUMID = LIGHT = WATER1 = WATER2 = WATER3 = 
 SERVER_STATUS = True
 SENSOR_STATUS = False
 
-VERSION = '1.6'
+VERSION = '1.7'
 
 IS_PI = True
 
@@ -244,7 +244,7 @@ def readParams():
                 RELAYS_PARAM.append(j)
             
             for relay in relay_list:
-                j = '''{"RELAY": "%d", "MODE": "onoff", "SETINFO": "off"}''' % (relay)
+                j = '''{"RELAY": "%d", "NAME": "", "MODE": "onoff", "SETINFO": "off"}''' % (relay)
                 RELAYS_PARAM.append(j)
                 
     else:
@@ -253,41 +253,49 @@ def readParams():
 	"CONTROL": [
 		{
 			"RELAY": "1",
+			"NAME": "RELAY1",
 			"MODE": "onoff",
 			"SETINFO": "off"
 		},
 		{
 			"RELAY": "2",
+			"NAME": "RELAY2",
 			"MODE": "onoff",
 			"SETINFO": "off"
 		},
 		{
 			"RELAY": "3",
+			"NAME": "RELAY3",
 			"MODE": "onoff",
 			"SETINFO": "off"
 		},
 		{
 			"RELAY": "4",
+			"NAME": "RELAY4",
 			"MODE": "onoff",
 			"SETINFO": "off"
 		},
 		{
 			"RELAY": "5",
+			"NAME": "RELAY5",
 			"MODE": "onoff",
 			"SETINFO": "off"
 		},
 		{
 			"RELAY": "6",
+			"NAME": "RELAY6",
 			"MODE": "onoff",
 			"SETINFO": "off"
 		},
 		{
 			"RELAY": "7",
+			"NAME": "RELAY7",
 			"MODE": "onoff",
 			"SETINFO": "off"
 		},
 		{
 			"RELAY": "8",
+			"NAME": "RELAY8",
 			"MODE": "onoff",
 			"SETINFO": "off"
 		}
@@ -353,7 +361,7 @@ def updateRelay():
         print('\n--------------- checking relay params ---------------')
         for relay in RELAYS_PARAM:
             result = False
-
+            
             relay = json.loads(relay)
             print(relay)
             
@@ -386,7 +394,7 @@ def updateRelay():
                 if relay['RELAY'] == '8': GPIO.output(RELAY8_PIN, False)
         print('-----------------------------------------------------\n')
     except Exception as e:
-        print(e)
+        print('Update Realy Error:', e)
     
 async def send_sensor_data(ws):
     global Channel, CO2, TVOC, PM25, TEMP, HUMID, LIGHT, WATER1, WATER2, WATER3, SERVER_STATUS, SENSOR_STATUS
@@ -548,6 +556,8 @@ async def main():
     readParams()
     
     while True:
+        print('Updating Relays..')
+        updateRelay()
         print('Creating a new websockets..')
         SERVER_STATUS = True
         
