@@ -25,7 +25,7 @@ Channel = CO2 = TVOC = PM25 = TEMP = HUMID = LIGHT = WATER1 = WATER2 = WATER3 = 
 SERVER_STATUS = True
 SENSOR_STATUS = False
 
-VERSION = '1.8'
+VERSION = '1.9'
 
 IS_PI = True
 
@@ -68,7 +68,7 @@ if IS_PI:
             setting_id = setting_id.replace('\n', '')
     f.close()
 
-    uri = 'ws://v3.atmo.kr/atmo_ws?%s' % (setting_id)
+    uri = 'ws://v1.azmo.kr/atmo_ws?%s' % (setting_id)
 
     f = open('/etc/xdg/lxsession/LXDE-pi/autostart','r')
     data = ''
