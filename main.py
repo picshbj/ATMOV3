@@ -68,7 +68,7 @@ if IS_PI:
             setting_id = setting_id.replace('\n', '')
     f.close()
 
-    uri = 'ws://v1.azmo.kr/atmo_ws?%s' % (setting_id)
+    uri = 'wss://v1.azmo.kr/atmo_ws?%s' % (setting_id)
 
     f = open('/etc/xdg/lxsession/LXDE-pi/autostart','r')
     data = ''
