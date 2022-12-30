@@ -20,10 +20,11 @@ DIP2_PIN_1 = 16
 DIP3_PIN_4 = 26
 DIP4_PIN_3 = 20
 
-global Channel, CO2, TVOC, PM25, TEMP, HUMID, LIGHT, WATER1, WATER2, WATER3, RELAYS_PARAM, SERVER_STATUS, SENSOR_STATUS
+global Channel, CO2, TVOC, PM25, TEMP, HUMID, LIGHT, WATER1, WATER2, WATER3, RELAYS_PARAM, SERVER_STATUS, SENSOR_STATUS, SERIAL_WATCHDOG
 Channel = CO2 = TVOC = PM25 = TEMP = HUMID = LIGHT = WATER1 = WATER2 = WATER3 = 0
 SERVER_STATUS = True
 SENSOR_STATUS = False
+SERIAL_WATCHDOG = 0
 
 VERSION = '2.1'
 
@@ -94,18 +95,19 @@ if IS_PI:
     class InputChunkProtocol(asyncio.Protocol):
         def __init__(self):
             self.line = ''
-            self.serial_watchdog = 0
-            self.watchdog_cnt = 0
             
         def connection_made(self, transport):
             self.transport = transport
         
         def data_received(self, data):
-            global Channel, CO2, TVOC, PM25, TEMP, HUMID, LIGHT, WATER1, WATER2, WATER3, SERVER_STATUS, SENSOR_STATUS
+            global Channel, CO2, TVOC, PM25, TEMP, HUMID, LIGHT, WATER1, WATER2, WATER3, SERVER_STATUS, SENSOR_STATUS, SERIAL_WATCHDOG
             
             if len(data) > 0:
                 self.line += str(data, 'utf-8')
             print('\n[Sensor sData]', self.line)
+
+            SERIAL_WATCHDOG = time.time()
+            SENSOR_STATUS = True
                             
             if ('{' in self.line and '}' in self.line) and (self.line.find('{') < self.line.find('}')):
                 line = self.line[self.line.find('{'):self.line.find('}')+1]
@@ -123,21 +125,12 @@ if IS_PI:
                             TEMP = float(d['TEMP'])
                             HUMID = float(d['HUMID'])
                             LIGHT = int(d['LIGHT'])
-                            self.serial_watchdog = time.time()
-                            SENSOR_STATUS = True
-                            self.watchdog_cnt = 0
                         
                 except Exception as e:
                     # SERVER_STATUS = False
                     print('Serial Error:', e)
             elif ('{' in self.line and '}' in self.line) and (self.line.find('{') > self.line.find('}')):
                 self.line = self.line[self.line.find('{'):]
-                
-            if time.time() - self.serial_watchdog > 10.0:
-                SENSOR_STATUS = False
-                self.watchdog_cnt += 1
-                # if self.watchdog_cnt > 10:
-                #     SERVER_STATUS = False
             
             self.pause_reading()
             
@@ -397,7 +390,7 @@ def updateRelay():
         print('Update Realy Error:', e)
     
 async def send_sensor_data(ws):
-    global Channel, CO2, TVOC, PM25, TEMP, HUMID, LIGHT, WATER1, WATER2, WATER3, SERVER_STATUS, SENSOR_STATUS
+    global Channel, CO2, TVOC, PM25, TEMP, HUMID, LIGHT, WATER1, WATER2, WATER3, SERVER_STATUS, SENSOR_STATUS, SERIAL_WATCHDOG
 
     DB_time_check = 0
     WEB_time_check = 0
@@ -407,6 +400,9 @@ async def send_sensor_data(ws):
         await asyncio.sleep(0)
         if not SERVER_STATUS: break
         try:
+            if time.time() - SERIAL_WATCHDOG > 10.0:
+                SENSOR_STATUS = False
+
             if SENSOR_STATUS:
                 if int(time.time()) - DB_time_check > 60 * 10:   # DB update per every 10 mins
                     DB_time_check = int(time.time())
@@ -442,7 +438,7 @@ async def send_sensor_data(ws):
                     print('[WEB PUSH]', pData)
                     await ws.send(pData)
             else:
-                if int(time.time()) - WEB_time_check > 1:   # DO NOT CHANGE THE VALUE
+                if int(time.time()) - WEB_time_check > 5:   # DO NOT CHANGE THE VALUE
                     WEB_time_check = int(time.time())
                     print('Sensor Status False')
                 
@@ -570,7 +566,7 @@ async def main():
                 )
         except Exception as e:
             print('Main Error:', e)
-            await asyncio.sleep(5)
+            await asyncio.sleep(1)
 
 loop = asyncio.get_event_loop()
 loop.run_until_complete(main())
