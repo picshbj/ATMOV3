@@ -25,7 +25,7 @@ Channel = CO2 = TVOC = PM25 = TEMP = HUMID = LIGHT = WATER1 = WATER2 = WATER3 = 
 SERVER_STATUS = True
 SENSOR_STATUS = False
 
-VERSION = '1.9'
+VERSION = '2.0'
 
 IS_PI = True
 
@@ -128,7 +128,7 @@ if IS_PI:
                             self.watchdog_cnt = 0
                         
                 except Exception as e:
-                    SERVER_STATUS = False
+                    # SERVER_STATUS = False
                     print('Serial Error:', e)
             elif ('{' in self.line and '}' in self.line) and (self.line.find('{') > self.line.find('}')):
                 self.line = self.line[self.line.find('{'):]
@@ -136,8 +136,8 @@ if IS_PI:
             if time.time() - self.serial_watchdog > 10.0:
                 SENSOR_STATUS = False
                 self.watchdog_cnt += 1
-                if self.watchdog_cnt > 10:
-                    SERVER_STATUS = False
+                # if self.watchdog_cnt > 10:
+                #     SERVER_STATUS = False
             
             self.pause_reading()
             
@@ -158,7 +158,7 @@ if IS_PI:
                 protocol.resume_reading()
                 
             except Exception as e:
-                SERVER_STATUS = False
+                # SERVER_STATUS = False
                 print('Serial Reader Error:', e)
                 
         raise RuntimeError('Serial Read Error')    
@@ -207,7 +207,7 @@ else:
                 SENSOR_STATUS = True
 
             except Exception as e:
-                SERVER_STATUS = False
+                # SERVER_STATUS = False
                 print('Serial Reader Error:', e)
                 
         raise RuntimeError('Serial Read Error')
