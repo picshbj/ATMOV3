@@ -25,7 +25,7 @@ Channel = CO2 = TVOC = PM25 = TEMP = HUMID = LIGHT = WATER1 = WATER2 = WATER3 = 
 SERVER_STATUS = True
 SENSOR_STATUS = False
 
-VERSION = '2.0'
+VERSION = '2.1'
 
 IS_PI = True
 
@@ -161,7 +161,7 @@ if IS_PI:
                 # SERVER_STATUS = False
                 print('Serial Reader Error:', e)
                 
-        raise RuntimeError('Serial Read Error')    
+        # raise RuntimeError('Serial Read Error')    
 
 else:
     class GPIO():
@@ -210,7 +210,7 @@ else:
                 # SERVER_STATUS = False
                 print('Serial Reader Error:', e)
                 
-        raise RuntimeError('Serial Read Error')
+        # raise RuntimeError('Serial Read Error')
 
 
 
