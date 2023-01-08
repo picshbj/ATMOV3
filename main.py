@@ -364,10 +364,10 @@ def updateRelay():
             
             if relay['MODE'] == 'onoff':   # manual mode
                 result = runManualMode(relay['SETINFO'])
-                if relay['SETINFO'] == 'on':
+                if relay['SETINFO'] == 'on' and Manual_Relay_Info[idx][0] == False:
                     Manual_Relay_Info[idx][0] = True
                     Manual_Relay_Info[idx][1] = time.time()
-                else: Manual_Relay_Info[idx][0] = False
+                elif relay['SETINFO'] == 'off': Manual_Relay_Info[idx][0] = False
                 
             
             elif relay['MODE'] == 'repeat':   # weekly repeat mode
@@ -379,7 +379,7 @@ def updateRelay():
                 Manual_Relay_Info[idx][0] = False
                 
             
-            if Manual_Relay_Info[idx][0] == True and time.time() - Manual_Relay_Info[idx][0][1] > 60*30:
+            if Manual_Relay_Info[idx][0] == True and time.time() - Manual_Relay_Info[idx][1] > 60*30:
                 result = False
                 RELAYS_PARAM[idx] = '''{"RELAY": "%d", "NAME": "%s", "MODE": "onoff", "SETINFO": "off"}''' % (idx+1, relay['NAME'])
                 Manual_Relay_Info[idx][0] = False
