@@ -20,13 +20,15 @@ DIP2_PIN_1 = 16
 DIP3_PIN_4 = 26
 DIP4_PIN_3 = 20
 
-global Channel, CO2, TVOC, PM25, TEMP, HUMID, LIGHT, WATER1, WATER2, WATER3, RELAYS_PARAM, SERVER_STATUS, SENSOR_STATUS, SERIAL_WATCHDOG
+global Channel, CO2, TVOC, PM25, TEMP, HUMID, LIGHT, WATER1, WATER2, WATER3, RELAYS_PARAM, SERVER_STATUS, SENSOR_STATUS, SERIAL_WATCHDOG, Manual_Relay_Info, Relay_Pins
 Channel = CO2 = TVOC = PM25 = TEMP = HUMID = LIGHT = WATER1 = WATER2 = WATER3 = 0
 SERVER_STATUS = True
 SENSOR_STATUS = False
 SERIAL_WATCHDOG = 0
+Manual_Relay_Info = [[False, 0],[False, 0],[False, 0],[False, 0],[False, 0],[False, 0],[False, 0],[False, 0]]
+Relay_Pins = []
 
-VERSION = '2.1'
+VERSION = '2.2'
 
 IS_PI = True
 
@@ -58,6 +60,8 @@ if IS_PI:
     GPIO.setup(DIP2_PIN_1, GPIO.IN)
     GPIO.setup(DIP3_PIN_4, GPIO.IN)
     GPIO.setup(DIP4_PIN_3, GPIO.IN)
+
+    Relay_Pins = [RELAY1_PIN, RELAY2_PIN, RELAY3_PIN, RELAY4_PIN, RELAY5_PIN, RELAY6_PIN, RELAY7_PIN, RELAY8_PIN]
 
     f = open('/home/pi/Desktop/settings.txt', 'r')
     setting_id = ''
@@ -348,11 +352,11 @@ def readDipSW():
     return num
 
 def updateRelay():
-    global RELAYS_PARAM
+    global RELAYS_PARAM, Manual_Relay_Info, Relay_Pins
     
     try:
         print('\n--------------- checking relay params ---------------')
-        for relay in RELAYS_PARAM:
+        for idx, relay in enumerate(RELAYS_PARAM):
             result = False
             
             relay = json.loads(relay)
@@ -360,31 +364,33 @@ def updateRelay():
             
             if relay['MODE'] == 'onoff':   # manual mode
                 result = runManualMode(relay['SETINFO'])
+                if relay['SETINFO'] == 'on':
+                    Manual_Relay_Info[idx][0] = True
+                    Manual_Relay_Info[idx][1] = time.time()
+                else: Manual_Relay_Info[idx][0] = False
+                
             
             elif relay['MODE'] == 'repeat':   # weekly repeat mode
                 result = runWeeklyRepeatMode(relay['SETINFO'])
+                Manual_Relay_Info[idx][0] = False
 
             elif relay['MODE'] == 'week': # periodic mode
                 result = runPeriodictMode(relay['SETINFO'])
+                Manual_Relay_Info[idx][0] = False
+                
+            
+            if Manual_Relay_Info[idx][0] == True and time.time() - Manual_Relay_Info[idx][0][1] > 60*30:
+                result = False
+                RELAYS_PARAM[idx] = '''{"RELAY": "%d", "NAME": "%s", "MODE": "onoff", "SETINFO": "off"}''' % (idx+1, relay['NAME'])
+                Manual_Relay_Info[idx][0] = False
+                saveParams(RELAYS_PARAM)
+
 
             if result:
-                if relay['RELAY'] == '1': GPIO.output(RELAY1_PIN, True)
-                if relay['RELAY'] == '2': GPIO.output(RELAY2_PIN, True)
-                if relay['RELAY'] == '3': GPIO.output(RELAY3_PIN, True)
-                if relay['RELAY'] == '4': GPIO.output(RELAY4_PIN, True)
-                if relay['RELAY'] == '5': GPIO.output(RELAY5_PIN, True)
-                if relay['RELAY'] == '6': GPIO.output(RELAY6_PIN, True)
-                if relay['RELAY'] == '7': GPIO.output(RELAY7_PIN, True)
-                if relay['RELAY'] == '8': GPIO.output(RELAY8_PIN, True)
+                GPIO.output(Relay_Pins[idx], True)
             else:
-                if relay['RELAY'] == '1': GPIO.output(RELAY1_PIN, False)
-                if relay['RELAY'] == '2': GPIO.output(RELAY2_PIN, False)
-                if relay['RELAY'] == '3': GPIO.output(RELAY3_PIN, False)
-                if relay['RELAY'] == '4': GPIO.output(RELAY4_PIN, False)
-                if relay['RELAY'] == '5': GPIO.output(RELAY5_PIN, False)
-                if relay['RELAY'] == '6': GPIO.output(RELAY6_PIN, False)
-                if relay['RELAY'] == '7': GPIO.output(RELAY7_PIN, False)
-                if relay['RELAY'] == '8': GPIO.output(RELAY8_PIN, False)
+                GPIO.output(Relay_Pins[idx], False)
+
         print('-----------------------------------------------------\n')
     except Exception as e:
         print('Update Realy Error:', e)
