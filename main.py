@@ -379,7 +379,7 @@ def updateRelay():
                 Manual_Relay_Info[idx][0] = False
                 
             
-            if Manual_Relay_Info[idx][0] == True and time.time() - Manual_Relay_Info[idx][1] > 60*30:
+            if Manual_Relay_Info[idx][0] == True and time.time() - Manual_Relay_Info[idx][1] > 60*20:
                 result = False
                 RELAYS_PARAM[idx] = '''{"RELAY": "%d", "NAME": "%s", "MODE": "onoff", "SETINFO": "off"}''' % (idx+1, relay['NAME'])
                 Manual_Relay_Info[idx][0] = False
