@@ -28,7 +28,7 @@ SERIAL_WATCHDOG = 0
 Manual_Relay_Info = [[False, 0],[False, 0],[False, 0],[False, 0],[False, 0],[False, 0],[False, 0],[False, 0]]
 Relay_Pins = []
 
-VERSION = '3.0'
+VERSION = '3.1'
 
 IS_PI = True
 
@@ -80,6 +80,13 @@ if IS_PI:
     isChanged = False
     for line in f:
         if 'atmo' in line:
+            line = line.replace('atmo', 'azmo')
+            isChanged = True
+        if 'v3' in line:
+            line = line.replace('v3', 'v1')
+            isChanged = True
+
+	if 'azmo' in line:
             id = line.split('/')[1].replace('\n','')
             if setting_id != id:
                 isChanged = True
