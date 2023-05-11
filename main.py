@@ -86,7 +86,7 @@ if IS_PI:
             line = line.replace('v3', 'v1')
             isChanged = True
 
-	if 'azmo' in line:
+        if 'azmo' in line:
             id = line.split('/')[1].replace('\n','')
             if setting_id != id:
                 isChanged = True
