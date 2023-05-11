@@ -28,7 +28,7 @@ SERIAL_WATCHDOG = 0
 Manual_Relay_Info = [[False, 0],[False, 0],[False, 0],[False, 0],[False, 0],[False, 0],[False, 0],[False, 0]]
 Relay_Pins = []
 
-VERSION = '2.3'
+VERSION = '3.0'
 
 IS_PI = True
 
@@ -73,7 +73,7 @@ if IS_PI:
             setting_id = setting_id.replace('\n', '')
     f.close()
 
-    uri = 'wss://v1.azmo.kr/atmo_ws?%s' % (setting_id)
+    uri = 'wss://back.azmo.kr/azmo_ws?%s' % (setting_id)
 
     f = open('/etc/xdg/lxsession/LXDE-pi/autostart','r')
     data = ''
@@ -223,7 +223,7 @@ def saveParams(RELAYS_PARAM):
                     json.loads(RELAYS_PARAM[7])
                     ]
         }
-    with open('./saved.json', 'w', encoding='utf-8') as make_file:
+    with open('./saved3.json', 'w', encoding='utf-8') as make_file:
         json.dump(params, make_file, indent='\t')
         
 
@@ -231,8 +231,8 @@ def readParams():
     global RELAYS_PARAM
     RELAYS_PARAM = []
     relay_list = [1,2,3,4,5,6,7,8]
-    if os.path.exists('./saved.json'):
-        with open('./saved.json', 'r', encoding='utf-8') as read_file:
+    if os.path.exists('./saved3.json'):
+        with open('./saved3.json', 'r', encoding='utf-8') as read_file:
             d = json.load(read_file)
             for relay in d['CONTROL']:
                 j = json.dumps(relay)
@@ -241,7 +241,7 @@ def readParams():
                 RELAYS_PARAM.append(j)
             
             for relay in relay_list:
-                j = '''{"RELAY": "%d", "NAME": "", "MODE": "onoff", "SETINFO": "off"}''' % (relay)
+                j = '''{"RELAY": "%d", "NAME": "", "MODE": "onoff", "ONOFFINFO": "off"}''' % (relay)
                 RELAYS_PARAM.append(j)
                 
     else:
@@ -252,86 +252,89 @@ def readParams():
 			"RELAY": "1",
 			"NAME": "RELAY1",
 			"MODE": "onoff",
-			"SETINFO": "off"
+			"ONOFFINFO": "off"
 		},
 		{
 			"RELAY": "2",
 			"NAME": "RELAY2",
 			"MODE": "onoff",
-			"SETINFO": "off"
+			"ONOFFINFO": "off"
 		},
 		{
 			"RELAY": "3",
 			"NAME": "RELAY3",
 			"MODE": "onoff",
-			"SETINFO": "off"
+			"ONOFFINFO": "off"
 		},
 		{
 			"RELAY": "4",
 			"NAME": "RELAY4",
 			"MODE": "onoff",
-			"SETINFO": "off"
+			"ONOFFINFO": "off"
 		},
 		{
 			"RELAY": "5",
 			"NAME": "RELAY5",
 			"MODE": "onoff",
-			"SETINFO": "off"
+			"ONOFFINFO": "off"
 		},
 		{
 			"RELAY": "6",
 			"NAME": "RELAY6",
 			"MODE": "onoff",
-			"SETINFO": "off"
+			"ONOFFINFO": "off"
 		},
 		{
 			"RELAY": "7",
 			"NAME": "RELAY7",
 			"MODE": "onoff",
-			"SETINFO": "off"
+			"ONOFFINFO": "off"
 		},
 		{
 			"RELAY": "8",
 			"NAME": "RELAY8",
 			"MODE": "onoff",
-			"SETINFO": "off"
+			"ONOFFINFO": "off"
 		}
 	]
 }
 '''
-        with open('./saved.json', 'w', encoding='utf-8') as save_file:
+        with open('./saved3.json', 'w', encoding='utf-8') as save_file:
             save_file.write(pData)
         
-        with open('./saved.json', 'r', encoding='utf-8') as read_file:
+        with open('./saved3.json', 'r', encoding='utf-8') as read_file:
             d = json.load(read_file)
             for relay in d['CONTROL']:
                 RELAYS_PARAM.append(json.dumps(relay))
 
-        # RELAYS_PARAM = ['{"RELAY":"1", "MODE":"onoff", "SETINFO":"off"}', '{"RELAY":"2", "MODE":"onoff", "SETINFO":"off"}', '{"RELAY":"3", "MODE":"onoff", "SETINFO":"off"}', '{"RELAY":"4", "MODE":"onoff", "SETINFO":"off"}', '{"RELAY":"5", "MODE":"onoff", "SETINFO":"off"}', '{"RELAY":"6", "MODE":"onoff", "SETINFO":"off"}', '{"RELAY":"7", "MODE":"onoff", "SETINFO":"off"}', '{"RELAY":"8", "MODE":"onoff", "SETINFO":"off"}']
+        # RELAYS_PARAM = ['{"RELAY":"1", "MODE":"onoff", "ONOFFINFO":"off"}', '{"RELAY":"2", "MODE":"onoff", "ONOFFINFO":"off"}', '{"RELAY":"3", "MODE":"onoff", "ONOFFINFO":"off"}', '{"RELAY":"4", "MODE":"onoff", "ONOFFINFO":"off"}', '{"RELAY":"5", "MODE":"onoff", "ONOFFINFO":"off"}', '{"RELAY":"6", "MODE":"onoff", "ONOFFINFO":"off"}', '{"RELAY":"7", "MODE":"onoff", "ONOFFINFO":"off"}', '{"RELAY":"8", "MODE":"onoff", "ONOFFINFO":"off"}']
 
 
-def runManualMode(SETINFO):
-    if SETINFO == 'on': return True
+def runManualMode(ONOFFINFO):
+    if ONOFFINFO == 'on': return True
     else: return False
                 
-def runPeriodictMode(SETINFO):
-    # "SETINFO": {"START_DT": "20220909", "REPEAT_DAY": "15", "START_TIME": "0030", "END_TIME": "0100"}}
-    scheduled_date = datetime.datetime.strptime(SETINFO['START_DT'], '%Y%m%d').replace(tzinfo=datetime.timezone(datetime.timedelta(hours=9)))
+def runPeriodictMode(WEEKINFO):
+    # "WEEKINFO": {"START_DT": "20220909", "REPEAT_DAY": "15", "START_TIME": "0030", "END_TIME": "0100"}}
+    scheduled_date = datetime.datetime.strptime(WEEKINFO['START_DT'], '%Y-%m-%d').replace(tzinfo=datetime.timezone(datetime.timedelta(hours=9)))
     now = datetime.datetime.now(tz=datetime.timezone(datetime.timedelta(hours=9)))
     diff = now - scheduled_date
+    
+    #print('WEEK', WEEKINFO)
 
-    if diff.days % int(SETINFO['REPEAT_DAY']) == 0:
-        if int(SETINFO['START_TIME']) <= now.hour*100 + now.minute < int(SETINFO['END_TIME']):
+    if diff.days % int(WEEKINFO['REPEAT_DAY']) == 0:
+        if int(WEEKINFO['START_TIME']) <= now.hour*100 + now.minute < int(WEEKINFO['END_TIME']):
             return True
 
     return False
 
-def runWeeklyRepeatMode(SETINFO):
-    # "SETINFO": [{"WEEK_INFO": "1", "START_TIME": "0100", "END_TIME": "0200"}, {"WEEK_INFO": "2", "START_TIME": "0100", "END_TIME": "0200"}]
+def runWeeklyRepeatMode(REPEATINFO):
+    # "REPEATINFO": [{"WEEK_INFO": "1", "START_TIME": "0100", "END_TIME": "0200"}, {"WEEK_INFO": "2", "START_TIME": "0100", "END_TIME": "0200"}]
     # Mon(1), Tue(2), Wed(3), Thu(4), Fri(5), Sat(6), Sun(7)
     now = datetime.datetime.now(tz=datetime.timezone(datetime.timedelta(hours=9)))
     
-    for element in SETINFO:
+    for element in REPEATINFO:
+        #print('REPEAT',element)
         if int(element['WEEK_INFO']) == now.weekday()+1:
             if int(element['START_TIME']) <= now.hour*100 + now.minute < int(element['END_TIME']):
                 return True
@@ -363,25 +366,25 @@ def updateRelay():
             print(relay)
             
             if relay['MODE'] == 'onoff':   # manual mode
-                result = runManualMode(relay['SETINFO'])
-                if relay['SETINFO'] == 'on' and Manual_Relay_Info[idx][0] == False:
+                result = runManualMode(relay['ONOFFINFO'])
+                if relay['ONOFFINFO'] == 'on' and Manual_Relay_Info[idx][0] == False:
                     Manual_Relay_Info[idx][0] = True
                     Manual_Relay_Info[idx][1] = time.time()
-                elif relay['SETINFO'] == 'off': Manual_Relay_Info[idx][0] = False
+                elif relay['ONOFFINFO'] == 'off': Manual_Relay_Info[idx][0] = False
                 
             
             elif relay['MODE'] == 'repeat':   # weekly repeat mode
-                result = runWeeklyRepeatMode(relay['SETINFO'])
+                result = runWeeklyRepeatMode(relay['REPEATINFO'])
                 Manual_Relay_Info[idx][0] = False
 
             elif relay['MODE'] == 'week': # periodic mode
-                result = runPeriodictMode(relay['SETINFO'])
+                result = runPeriodictMode(relay['WEEKINFO'])
                 Manual_Relay_Info[idx][0] = False
                 
             
             if Manual_Relay_Info[idx][0] and (time.time() - Manual_Relay_Info[idx][1]) > 60*20:
                 result = False
-                RELAYS_PARAM[idx] = '''{"RELAY": "%d", "NAME": "%s", "MODE": "onoff", "SETINFO": "off"}''' % (idx+1, relay['NAME'])
+                RELAYS_PARAM[idx] = '''{"RELAY": "%d", "NAME": "%s", "MODE": "onoff", "ONOFFINFO": "off"}''' % (idx+1, relay['NAME'])
                 Manual_Relay_Info[idx][0] = False
                 saveParams(RELAYS_PARAM)
 
@@ -410,7 +413,7 @@ async def send_sensor_data(ws):
                 SENSOR_STATUS = False
 
             if SENSOR_STATUS:
-                if int(time.time()) - DB_time_check > 60 * 10:   # DB update per every 10 mins
+                if int(time.time()) - DB_time_check > 60 * 30:   # DB update per every 10 mins
                     DB_time_check = int(time.time())
                     params = {
                         "METHOD": "DBINIT",
