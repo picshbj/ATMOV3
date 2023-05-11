@@ -526,9 +526,9 @@ async def recv_handler(ws):
                 pData = json.dumps(params)
                 await ws.send(pData)
 
-            elif d['METHOD'] == 'REBOOT':
+            elif d['METHOD'] == 'R_START':
                 params = {
-                    "METHOD": "REBOOT",
+                    "METHOD": "R_START",
                     "RESULT": True
                 }
                 pData = json.dumps(params)
