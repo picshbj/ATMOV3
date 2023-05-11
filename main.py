@@ -28,7 +28,7 @@ SERIAL_WATCHDOG = 0
 Manual_Relay_Info = [[False, 0],[False, 0],[False, 0],[False, 0],[False, 0],[False, 0],[False, 0],[False, 0]]
 Relay_Pins = []
 
-VERSION = '3.1'
+VERSION = '3.2'
 
 IS_PI = True
 
@@ -73,7 +73,7 @@ if IS_PI:
             setting_id = setting_id.replace('\n', '')
     f.close()
 
-    uri = 'wss://back.azmo.kr/azmo_ws?%s' % (setting_id)
+    uri = 'wss://admin.azmo.kr/azmo_ws?%s' % (setting_id)
 
     f = open('/etc/xdg/lxsession/LXDE-pi/autostart','r')
     data = ''
