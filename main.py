@@ -28,7 +28,7 @@ SERIAL_WATCHDOG = 0
 Manual_Relay_Info = [[False, 0],[False, 0],[False, 0],[False, 0],[False, 0],[False, 0],[False, 0],[False, 0]]
 Relay_Pins = []
 
-VERSION = '3.4'
+VERSION = '3.5'
 
 IS_PI = True
 
@@ -322,33 +322,40 @@ def runManualMode(ONOFFINFO):
     else: return False
                 
 def runPeriodictMode(WEEKINFO):
-    # "WEEKINFO": {"START_DT": "20220909", "REPEAT_DAY": "15", "START_TIME": "0030", "END_TIME": "0100"}}
-    scheduled_date = datetime.datetime.strptime(WEEKINFO['START_DT'], '%Y-%m-%d').replace(tzinfo=datetime.timezone(datetime.timedelta(hours=9)))
-    now = datetime.datetime.now(tz=datetime.timezone(datetime.timedelta(hours=9)))
-    diff = now - scheduled_date
-    
-    #print('WEEK', WEEKINFO)
+    try:
+        # "WEEKINFO": {"START_DT": "20220909", "REPEAT_DAY": "15", "START_TIME": "0030", "END_TIME": "0100"}}
+        scheduled_date = datetime.datetime.strptime(WEEKINFO['START_DT'], '%Y-%m-%d').replace(tzinfo=datetime.timezone(datetime.timedelta(hours=9)))
+        now = datetime.datetime.now(tz=datetime.timezone(datetime.timedelta(hours=9)))
+        diff = now - scheduled_date
+        
+        #print('WEEK', WEEKINFO)
 
-    if diff.days % int(WEEKINFO['REPEAT_DAY']) == 0:
-        if int(WEEKINFO['START_TIME']) <= now.hour*100 + now.minute < int(WEEKINFO['END_TIME']):
-            return True
-
-    return False
+        if diff.days % int(WEEKINFO['REPEAT_DAY']) == 0:
+            if int(WEEKINFO['START_TIME']) <= now.hour*100 + now.minute < int(WEEKINFO['END_TIME']):
+                return True
+    except Exception as e:
+        print('WEEK INFO ERROR:', e)
+    finally:
+        return False
 
 def runWeeklyRepeatMode(REPEATINFO):
-    # "REPEATINFO": [{"WEEK_INFO": "1", "START_TIME": "0100", "END_TIME": "0200"}, {"WEEK_INFO": "2", "START_TIME": "0100", "END_TIME": "0200"}]
-    # Mon(1), Tue(2), Wed(3), Thu(4), Fri(5), Sat(6), Sun(7)
-    now = datetime.datetime.now(tz=datetime.timezone(datetime.timedelta(hours=9)))
-    
-    for element in REPEATINFO:
-        #print('REPEAT',element)
-        if element['WEEK_INFO'] == '':
-            return False
-        if int(element['WEEK_INFO']) == now.weekday()+1:
-            if int(element['START_TIME']) <= now.hour*100 + now.minute < int(element['END_TIME']):
-                return True
-    
-    return False
+    try:
+        # "REPEATINFO": [{"WEEK_INFO": "1", "START_TIME": "0100", "END_TIME": "0200"}, {"WEEK_INFO": "2", "START_TIME": "0100", "END_TIME": "0200"}]
+        # Mon(1), Tue(2), Wed(3), Thu(4), Fri(5), Sat(6), Sun(7)
+        now = datetime.datetime.now(tz=datetime.timezone(datetime.timedelta(hours=9)))
+        
+        for element in REPEATINFO:
+            #print('REPEAT',element)
+            if element['WEEK_INFO'] == '':
+                return False
+            if int(element['WEEK_INFO']) == now.weekday()+1:
+                if int(element['START_TIME']) <= now.hour*100 + now.minute < int(element['END_TIME']):
+                    return True
+                
+    except Exception as e:
+        print('WEEK INFO ERROR:', e)
+    finally:
+        return False
 
 def readDipSW():
     num = 0
@@ -413,6 +420,7 @@ async def send_sensor_data(ws):
     DB_time_check = 0
     WEB_time_check = 0
     relay_time_check = 0
+    ping_pong_time_check = 0
     
     while True:
         await asyncio.sleep(0)
@@ -464,6 +472,16 @@ async def send_sensor_data(ws):
             if int(time.time()) - relay_time_check > 5: # check relay every 5 sec
                 relay_time_check = int(time.time())
                 updateRelay()
+            
+            if int(time.time()) - ping_pong_time_check > 20:
+                ping_pong_time_check = int(time.time())
+                params = {
+                    "METHOD": "PING"
+                }
+
+                pData = json.dumps(params)
+                print('[SEND PING]', pData)
+                await ws.send(pData)
                 
         except Exception as e:
             SERVER_STATUS = False
@@ -479,6 +497,10 @@ async def recv_handler(ws):
             data = await ws.recv()
             d = json.loads(data)
             print('recieved:', d)
+            
+            if 'TIMESTAMP' in d:
+                time_cmd = "sudo date -s '%s'" % d['TIMESTAMP']
+                os.system(time_cmd)
             
             if d['METHOD'] == 'CALL_A':
                 params = {
