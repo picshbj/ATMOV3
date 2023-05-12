@@ -28,7 +28,7 @@ SERIAL_WATCHDOG = 0
 Manual_Relay_Info = [[False, 0],[False, 0],[False, 0],[False, 0],[False, 0],[False, 0],[False, 0],[False, 0]]
 Relay_Pins = []
 
-VERSION = '3.5'
+VERSION = '3.6'
 
 IS_PI = True
 
@@ -333,9 +333,10 @@ def runPeriodictMode(WEEKINFO):
         if diff.days % int(WEEKINFO['REPEAT_DAY']) == 0:
             if int(WEEKINFO['START_TIME']) <= now.hour*100 + now.minute < int(WEEKINFO['END_TIME']):
                 return True
+        return False
+
     except Exception as e:
         print('WEEK INFO ERROR:', e)
-    finally:
         return False
 
 def runWeeklyRepeatMode(REPEATINFO):
@@ -351,10 +352,10 @@ def runWeeklyRepeatMode(REPEATINFO):
             if int(element['WEEK_INFO']) == now.weekday()+1:
                 if int(element['START_TIME']) <= now.hour*100 + now.minute < int(element['END_TIME']):
                     return True
+        return False
                 
     except Exception as e:
         print('WEEK INFO ERROR:', e)
-    finally:
         return False
 
 def readDipSW():
