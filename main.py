@@ -28,7 +28,7 @@ SERIAL_WATCHDOG = 0
 Manual_Relay_Info = [[False, 0],[False, 0],[False, 0],[False, 0],[False, 0],[False, 0],[False, 0],[False, 0]]
 Relay_Pins = []
 
-VERSION = '3.3'
+VERSION = '3.4'
 
 IS_PI = True
 
@@ -342,6 +342,8 @@ def runWeeklyRepeatMode(REPEATINFO):
     
     for element in REPEATINFO:
         #print('REPEAT',element)
+        if element['WEEK_INFO'] == '':
+            return False
         if int(element['WEEK_INFO']) == now.weekday()+1:
             if int(element['START_TIME']) <= now.hour*100 + now.minute < int(element['END_TIME']):
                 return True
