@@ -31,7 +31,7 @@ SERIAL_WATCHDOG = 0
 Manual_Relay_Info = [[False, 0],[False, 0],[False, 0],[False, 0],[False, 0],[False, 0],[False, 0],[False, 0]]
 Relay_Pins = []
 
-VERSION = '3.7'
+VERSION = '3.8'
 
 IS_PI = True
 
@@ -615,7 +615,7 @@ async def main():
         print('Creating a new websockets..')
         SERVER_STATUS = True
         if ERRORCOUNT > 25:
-            subprocess.call(['shutdown -r now'])
+            subprocess.call(['shutdown', '-r', 'now'])
         else:
             print('ERROR COUNT: %d' % (ERRORCOUNT))
         
