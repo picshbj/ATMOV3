@@ -614,7 +614,7 @@ async def main():
         updateRelay()
         print('Creating a new websockets..')
         SERVER_STATUS = True
-        if ERRORCOUNT > 15:
+        if ERRORCOUNT > 25:
             subprocess.call(['shutdown -r now'])
         else:
             print('ERROR COUNT: %d' % (ERRORCOUNT))
