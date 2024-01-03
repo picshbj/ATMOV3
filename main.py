@@ -6,6 +6,8 @@ import datetime
 import random
 import time 
 import shutil
+import requests
+import subprocess
         
 RELAY1_PIN = 17
 RELAY2_PIN = 27
@@ -19,16 +21,17 @@ DIP1_PIN_2 = 19
 DIP2_PIN_1 = 16
 DIP3_PIN_4 = 26
 DIP4_PIN_3 = 20
+COMM_EN_PIN = 23
 
 global Channel, CO2, TVOC, PM25, TEMP, HUMID, LIGHT, WATER1, WATER2, WATER3, RELAYS_PARAM, SERVER_STATUS, SENSOR_STATUS, SERIAL_WATCHDOG, Manual_Relay_Info, Relay_Pins
-Channel = CO2 = TVOC = PM25 = TEMP = HUMID = LIGHT = WATER1 = WATER2 = WATER3 = 0
+Channel = CO2 = TVOC = PM25 = TEMP = HUMID = LIGHT = WATER1 = WATER2 = WATER3 = ERRORCOUNT = 0
 SERVER_STATUS = True
 SENSOR_STATUS = False
 SERIAL_WATCHDOG = 0
 Manual_Relay_Info = [[False, 0],[False, 0],[False, 0],[False, 0],[False, 0],[False, 0],[False, 0],[False, 0]]
 Relay_Pins = []
 
-VERSION = '3.6'
+VERSION = '3.7'
 
 IS_PI = True
 
@@ -56,10 +59,13 @@ if IS_PI:
     GPIO.setup(RELAY6_PIN, GPIO.OUT)
     GPIO.setup(RELAY7_PIN, GPIO.OUT)
     GPIO.setup(RELAY8_PIN, GPIO.OUT)
+    GPIO.setup(COMM_EN_PIN, GPIO.OUT)
     GPIO.setup(DIP1_PIN_2, GPIO.IN)
     GPIO.setup(DIP2_PIN_1, GPIO.IN)
     GPIO.setup(DIP3_PIN_4, GPIO.IN)
     GPIO.setup(DIP4_PIN_3, GPIO.IN)
+    
+    GPIO.output(COMM_EN_PIN, True)
 
     Relay_Pins = [RELAY1_PIN, RELAY2_PIN, RELAY3_PIN, RELAY4_PIN, RELAY5_PIN, RELAY6_PIN, RELAY7_PIN, RELAY8_PIN]
 
@@ -115,7 +121,7 @@ if IS_PI:
             
             if len(data) > 0:
                 self.line += str(data, 'utf-8')
-            print('\n[Sensor sData]', self.line)
+            #print('\n[Sensor sData]', self.line)
 
             SERIAL_WATCHDOG = time.time()
             SENSOR_STATUS = True
@@ -422,6 +428,7 @@ async def send_sensor_data(ws):
     WEB_time_check = 0
     relay_time_check = 0
     ping_pong_time_check = 0
+    connection_check = 0
     
     while True:
         await asyncio.sleep(0)
@@ -429,24 +436,33 @@ async def send_sensor_data(ws):
         try:
             if time.time() - SERIAL_WATCHDOG > 10.0:
                 SENSOR_STATUS = False
+            
+            if int(time.time()) - connection_check >= 60 * 5:   # connection check every 5 mins
+                connection_check = int(time.time())
+                URL = 'https://v1.azmo.kr/api/fr/frMachineConnect.json?MACHINE_ID=%s' % (setting_id)
+                res = requests.get(URL)
+                print('connection check status code:', res.status_code)
 
             if SENSOR_STATUS:
-                if int(time.time()) - DB_time_check > 60 * 30:   # DB update per every 10 mins
+                if int(time.time()) - DB_time_check >= 60 * 30:   # DB update per every 30 mins
                     DB_time_check = int(time.time())
-                    params = {
-                        "METHOD": "DBINIT",
-                        "CO2": CO2,
-                        "TVOC": TVOC,
-                        "PM25": PM25,
-                        "TEMP": TEMP,
-                        "HUMID": HUMID,
-                        "LIGHT": LIGHT
-                    }
-                    pData = json.dumps(params)
-                    print('[DB PUSH]', pData)
-                    await ws.send(pData)
+                    URL = 'https://v1.azmo.kr/api/fr/frMachineApiSave.json?MACHINE_ID=%s&CO2=%d&TVOC=%d&PM25=%d&TEMP=%.1f&HUMID=%.1f&LIGHT=%d' % (setting_id, CO2, TVOC, PM25, TEMP, HUMID, LIGHT)
+                    res = requests.get(URL)
+                    print('data db push status code:', res.status_code)
+#                     params = {
+#                         "METHOD": "DBINIT",
+#                         "CO2": CO2,
+#                         "TVOC": TVOC,
+#                         "PM25": PM25,
+#                         "TEMP": TEMP,
+#                         "HUMID": HUMID,
+#                         "LIGHT": LIGHT
+#                     }
+#                     pData = json.dumps(params)
+#                     print('[DB PUSH]', pData)
+#                     await ws.send(pData)
                     
-                if int(time.time()) - WEB_time_check > 60:   # web update per every 60 sec
+                if int(time.time()) - WEB_time_check >= 60:   # web update per every 60 sec
                     WEB_time_check = int(time.time())
                     params = {
                         "METHOD": "SEND_F",
@@ -465,16 +481,16 @@ async def send_sensor_data(ws):
                     print('[WEB PUSH]', pData)
                     await ws.send(pData)
             else:
-                if int(time.time()) - WEB_time_check > 5:   # DO NOT CHANGE THE VALUE
+                if int(time.time()) - WEB_time_check >= 5:   # DO NOT CHANGE THE VALUE
                     WEB_time_check = int(time.time())
                     print('Sensor Status False')
                 
             
-            if int(time.time()) - relay_time_check > 5: # check relay every 5 sec
+            if int(time.time()) - relay_time_check >= 5: # check relay every 5 sec
                 relay_time_check = int(time.time())
                 updateRelay()
             
-            if int(time.time()) - ping_pong_time_check > 20:
+            if int(time.time()) - ping_pong_time_check >= 20:
                 ping_pong_time_check = int(time.time())
                 params = {
                     "METHOD": "PING"
@@ -489,7 +505,7 @@ async def send_sensor_data(ws):
             print('Sender Error', e)
 
 async def recv_handler(ws):
-    global RELAYS_PARAM, SERVER_STATUS, SENSOR_STATUS
+    global RELAYS_PARAM, SERVER_STATUS, SENSOR_STATUS, ERRORCOUNT
     
     while True:
         await asyncio.sleep(0)
@@ -517,6 +533,7 @@ async def recv_handler(ws):
                         ]
                 }
                 pData = json.dumps(params)
+                ERRORCOUNT = 0
                 await ws.send(pData)
                 
             
@@ -589,7 +606,7 @@ async def recv_handler(ws):
             
 
 async def main():
-    global SERVER_STATUS
+    global SERVER_STATUS, ERRORCOUNT
     readParams()
     
     while True:
@@ -597,6 +614,10 @@ async def main():
         updateRelay()
         print('Creating a new websockets..')
         SERVER_STATUS = True
+        if ERRORCOUNT > 15:
+            subprocess.call(['shutdown -r now'])
+        else:
+            print('ERROR COUNT: %d' % (ERRORCOUNT))
         
         try:
             async with websockets.connect(uri) as ws:
@@ -608,6 +629,7 @@ async def main():
         except Exception as e:
             print('Main Error:', e)
             await asyncio.sleep(1)
+            ERRORCOUNT += 1
 
 loop = asyncio.get_event_loop()
 loop.run_until_complete(main())
