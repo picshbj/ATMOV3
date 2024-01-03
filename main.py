@@ -31,7 +31,7 @@ SERIAL_WATCHDOG = 0
 Manual_Relay_Info = [[False, 0],[False, 0],[False, 0],[False, 0],[False, 0],[False, 0],[False, 0],[False, 0]]
 Relay_Pins = []
 
-VERSION = '3.8'
+VERSION = '3.9'
 
 IS_PI = True
 
@@ -596,7 +596,7 @@ async def recv_handler(ws):
                 pData = json.dumps(params)
                 await ws.send(pData)
 
-                os.system('shutdown -r now')
+                subprocess.call(['reboot'])
                     
 
         except Exception as e:
@@ -615,7 +615,7 @@ async def main():
         print('Creating a new websockets..')
         SERVER_STATUS = True
         if ERRORCOUNT > 25:
-            subprocess.call(['shutdown', '-r', 'now'])
+            subprocess.call(['reboot'])
         else:
             print('ERROR COUNT: %d' % (ERRORCOUNT))
         
