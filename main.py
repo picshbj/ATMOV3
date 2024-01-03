@@ -31,7 +31,7 @@ SERIAL_WATCHDOG = 0
 Manual_Relay_Info = [[False, 0],[False, 0],[False, 0],[False, 0],[False, 0],[False, 0],[False, 0],[False, 0]]
 Relay_Pins = []
 
-VERSION = '3.9'
+VERSION = '4.0'
 
 IS_PI = True
 
@@ -47,6 +47,17 @@ if IS_PI:
             print('This system has no serial_asyncio module..')
             print('Installing serial_asyncio module..')
             os.system('pip3 install pyserial-asyncio')
+            time.sleep(5)
+            
+    while True:
+        try:
+            import pyautogui
+            print('pyautogui import succeed!')
+            break
+        except Exception as e:
+            print('This system has no pyautogui module..')
+            print('Installing pyautogui module..')
+            os.system('pip3 install pyautogui')
             time.sleep(5)
 
     GPIO.setmode(GPIO.BCM)
@@ -438,6 +449,7 @@ async def send_sensor_data(ws):
                 SENSOR_STATUS = False
             
             if int(time.time()) - connection_check >= 60 * 5:   # connection check every 5 mins
+                pyautogui.press('f5')
                 connection_check = int(time.time())
                 URL = 'https://v1.azmo.kr/api/fr/frMachineConnect.json?MACHINE_ID=%s' % (setting_id)
                 res = requests.get(URL)
