@@ -23,8 +23,8 @@ DIP3_PIN_4 = 26
 DIP4_PIN_3 = 20
 COMM_EN_PIN = 23
 
-global Channel, CO2, TVOC, PM25, TEMP, HUMID, LIGHT, WATER1, WATER2, WATER3, RELAYS_PARAM, SERVER_STATUS, SENSOR_STATUS, SERIAL_WATCHDOG, Manual_Relay_Info, Relay_Pins, isReadyToSend, ERRORCOUNT, TGBOT, msgToSend
-Channel = CO2 = TVOC = PM25 = TEMP = HUMID = LIGHT = WATER1 = WATER2 = WATER3 = ERRORCOUNT = TGBOT = 0
+global Channel, CO2, TVOC, PM25, TEMP, HUMID, LIGHT, WATER1, WATER2, WATER3, RELAYS_PARAM, SERVER_STATUS, SENSOR_STATUS, SERIAL_WATCHDOG, Manual_Relay_Info, Relay_Pins, isReadyToSend, ERRORCOUNT, TGBOT, msgToSend, RECIEVE_WATCHDOG
+Channel = CO2 = TVOC = PM25 = TEMP = HUMID = LIGHT = WATER1 = WATER2 = WATER3 = ERRORCOUNT = TGBOT = RECIEVE_WATCHDOG = 0
 SERVER_STATUS = True
 SENSOR_STATUS = False
 isReadyToSend = False
@@ -455,10 +455,21 @@ async def send_sensor_data(ws):
     relay_time_check = 0
     ping_pong_time_check = 0
     connection_check = 0
+    RECIEVE_WATCHDOG = time.time()
     
     while True:
         await asyncio.sleep(0)
+        if time.time() - RECIEVE_WATCHDOG > 60.0:
+            try:
+                msg = '[%s][%s]\nRECIEVE_WATCHDOG is over' % (setting_id, datetime.datetime.today().strftime('%Y-%m-%d %H:%M:%S'))
+                await TGBOT.sendMessage(chat_id=chat_id, text=msg)
+            except Exception as e:
+                pass
+
+            SERVER_STATUS = False
+
         if not SERVER_STATUS: break
+        
         try:
             if isReadyToSend:
                 print('[Send Message to server]', msgToSend)
@@ -552,9 +563,10 @@ async def recv_handler(ws):
             try:
                 data = await ws.recv()
             except Exception as e:
-                print('RRRRRRRRR Error:', e)
+                print('Websocket recv() Error:', e)
+                await asyncio.sleep(1)
                 continue
-            
+
             d = json.loads(data)
             print('recieved:', d)
             
@@ -606,6 +618,7 @@ async def recv_handler(ws):
                 saveParams(RELAYS_PARAM)
 
             elif d['METHOD'] == 'TOTAL_STATUS':
+                RECIEVE_WATCHDOG = int(time.time())
                 params = {
                     "METHOD": "TOTAL_STATUS",
                     "DEVICE_ID": setting_id,
