@@ -33,7 +33,7 @@ Manual_Relay_Info = [[False, 0],[False, 0],[False, 0],[False, 0],[False, 0],[Fal
 Relay_Pins = []
 msgToSend = ''
 
-VERSION = '4.4'
+VERSION = '4.5'
 
 IS_PI = True
 
@@ -535,7 +535,7 @@ async def send_sensor_data(ws):
                 relay_time_check = int(time.time())
                 updateRelay()
             
-            if int(time.time()) - ping_pong_time_check >= 20:
+            if int(time.time()) - ping_pong_time_check >= 15:
                 ping_pong_time_check = int(time.time())
                 params = {
                     "METHOD": "PING"
