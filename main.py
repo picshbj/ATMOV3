@@ -455,7 +455,6 @@ async def send_sensor_data(ws):
     connection_check = 0
     
     while True:
-        await asyncio.sleep(0)
         if not SERVER_STATUS: break
         try:
             if time.time() - SERIAL_WATCHDOG > 10.0:
@@ -538,7 +537,6 @@ async def recv_handler(ws):
     global RELAYS_PARAM, SERVER_STATUS, SENSOR_STATUS, ERRORCOUNT
     
     while True:
-        await asyncio.sleep(0)
         if not SERVER_STATUS: break
         try:
             data = await ws.recv()
@@ -546,8 +544,9 @@ async def recv_handler(ws):
             print('recieved:', d)
             
             if 'TIMESTAMP' in d:
-                time_cmd = "sudo date -s '%s'" % d['TIMESTAMP']
-                os.system(time_cmd)
+                # time_cmd = "sudo date -s '%s'" % d['TIMESTAMP']
+                # os.system(time_cmd)
+                subprocess.call(['sudo', 'date', '-s', d['TIMESTAMP']])
             
             if d['METHOD'] == 'CALL_A':
                 params = {
@@ -693,12 +692,6 @@ async def main():
             subprocess.call(['reboot'])
         else:
             print('ERROR COUNT: %d' % (ERRORCOUNT))
-            
-            try:
-                msg = '[%s][%s]\nERROR COUNT: %d' % (setting_id, datetime.datetime.today().strftime('%Y-%m-%d %H:%M:%S'), ERRORCOUNT)
-                await TGBOT.sendMessage(chat_id=chat_id, text=msg)
-            except Exception as e:
-                pass
         
         try:
             async with websockets.connect(uri) as ws:
