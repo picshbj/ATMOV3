@@ -33,7 +33,7 @@ Manual_Relay_Info = [[False, 0],[False, 0],[False, 0],[False, 0],[False, 0],[Fal
 Relay_Pins = []
 msgToSend = ''
 
-VERSION = '4.3'
+VERSION = '4.4'
 
 IS_PI = True
 
@@ -448,7 +448,7 @@ def updateRelay():
         print('Update Realy Error:', e)
     
 async def send_sensor_data(ws):
-    global Channel, CO2, TVOC, PM25, TEMP, HUMID, LIGHT, WATER1, WATER2, WATER3, SERVER_STATUS, SENSOR_STATUS, SERIAL_WATCHDOG, msgToSend, isReadyToSend
+    global Channel, CO2, TVOC, PM25, TEMP, HUMID, LIGHT, WATER1, WATER2, WATER3, SERVER_STATUS, SENSOR_STATUS, SERIAL_WATCHDOG, msgToSend, isReadyToSend, RECIEVE_WATCHDOG
 
     DB_time_check = 0
     WEB_time_check = 0
@@ -459,7 +459,7 @@ async def send_sensor_data(ws):
     
     while True:
         await asyncio.sleep(0)
-        if time.time() - RECIEVE_WATCHDOG > 90.0:
+        if time.time() - RECIEVE_WATCHDOG > 120.0:
             try:
                 msg = '[%s][%s]\nRECIEVE_WATCHDOG is over' % (setting_id, datetime.datetime.today().strftime('%Y-%m-%d %H:%M:%S'))
                 await TGBOT.sendMessage(chat_id=chat_id, text=msg)
@@ -555,7 +555,7 @@ async def send_sensor_data(ws):
                 pass
 
 async def recv_handler(ws):
-    global RELAYS_PARAM, SERVER_STATUS, SENSOR_STATUS, ERRORCOUNT, msgToSend, isReadyToSend
+    global RELAYS_PARAM, SERVER_STATUS, SENSOR_STATUS, ERRORCOUNT, msgToSend, isReadyToSend, RECIEVE_WATCHDOG
     
     while True:
         if not SERVER_STATUS: break
