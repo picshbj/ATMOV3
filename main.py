@@ -561,6 +561,7 @@ async def recv_handler(ws):
         if not SERVER_STATUS: break
         try:
             try:
+                await asyncio.sleep(0)
                 data = await ws.recv()
             except Exception as e:
                 print('Websocket recv() Error:', e)
