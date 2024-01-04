@@ -680,6 +680,9 @@ async def recv_handler(ws):
                     pass
 
                 subprocess.call(['reboot'])
+            
+            elif d['METHOD'] == 'PONG':
+                RECIEVE_WATCHDOG = int(time.time())
                     
 
         except Exception as e:
