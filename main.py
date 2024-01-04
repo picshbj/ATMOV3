@@ -31,7 +31,7 @@ SERIAL_WATCHDOG = 0
 Manual_Relay_Info = [[False, 0],[False, 0],[False, 0],[False, 0],[False, 0],[False, 0],[False, 0],[False, 0]]
 Relay_Pins = []
 
-VERSION = '4.3'
+VERSION = '4.2'
 
 IS_PI = True
 
@@ -455,6 +455,7 @@ async def send_sensor_data(ws):
     connection_check = 0
     
     while True:
+        await asyncio.sleep(0)
         if not SERVER_STATUS: break
         try:
             if time.time() - SERIAL_WATCHDOG > 10.0:
@@ -546,7 +547,8 @@ async def recv_handler(ws):
             if 'TIMESTAMP' in d:
                 # time_cmd = "sudo date -s '%s'" % d['TIMESTAMP']
                 # os.system(time_cmd)
-                subprocess.call(['sudo', 'date', '-s', d['TIMESTAMP']])
+                TIMESTAMP = "'%s'" % d['TIMESTAMP']
+                subprocess.call(['sudo', 'date', '-s', TIMESTAMP])
             
             if d['METHOD'] == 'CALL_A':
                 params = {
