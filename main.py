@@ -33,7 +33,7 @@ Manual_Relay_Info = [[False, 0],[False, 0],[False, 0],[False, 0],[False, 0],[Fal
 Relay_Pins = []
 msgToSend = ''
 
-VERSION = '4.2'
+VERSION = '4.3'
 
 IS_PI = True
 
@@ -459,7 +459,7 @@ async def send_sensor_data(ws):
     
     while True:
         await asyncio.sleep(0)
-        if time.time() - RECIEVE_WATCHDOG > 60.0:
+        if time.time() - RECIEVE_WATCHDOG > 90.0:
             try:
                 msg = '[%s][%s]\nRECIEVE_WATCHDOG is over' % (setting_id, datetime.datetime.today().strftime('%Y-%m-%d %H:%M:%S'))
                 await TGBOT.sendMessage(chat_id=chat_id, text=msg)
@@ -564,7 +564,6 @@ async def recv_handler(ws):
                 data = await ws.recv()
             except Exception as e:
                 print('Websocket recv() Error:', e)
-                await asyncio.sleep(1)
                 continue
 
             d = json.loads(data)
