@@ -599,13 +599,13 @@ async def recv_handler(ws):
                     "RESULT": True
                 }
                 pData = json.dumps(params)
-                await ws.send(pData)
-                await asyncio.sleep(5)
                 try:
                     msg = '[%s][%s]\nReboot..' % (setting_id, datetime.datetime.today().strftime('%Y-%m-%d %H:%M:%S'))
                     await TGBOT.sendMessage(chat_id=chat_id, text=msg)
                 except Exception as e:
                     pass
+                await ws.send(pData)
+                await asyncio.sleep(5)
                 os.system('shutdown -r now')
             
             elif d['METHOD'] == 'OTA':
