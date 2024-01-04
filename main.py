@@ -31,7 +31,7 @@ SERIAL_WATCHDOG = 0
 Manual_Relay_Info = [[False, 0],[False, 0],[False, 0],[False, 0],[False, 0],[False, 0],[False, 0],[False, 0]]
 Relay_Pins = []
 
-VERSION = '4.2'
+VERSION = '4.3'
 
 IS_PI = True
 
@@ -466,14 +466,14 @@ async def send_sensor_data(ws):
                 connection_check = int(time.time())
                 URL = 'https://v1.azmo.kr/api/fr/frMachineConnect.json?MACHINE_ID=%s' % (setting_id)
                 res = requests.get(URL)
-                print('connection check status code:', res.status_code)
+                #print('connection check status code:', res.status_code)
 
             if SENSOR_STATUS:
                 if int(time.time()) - DB_time_check >= 60 * 30:   # DB update per every 30 mins
                     DB_time_check = int(time.time())
                     URL = 'https://v1.azmo.kr/api/fr/frMachineApiSave.json?MACHINE_ID=%s&CO2=%d&TVOC=%d&PM25=%d&TEMP=%.1f&HUMID=%.1f&LIGHT=%d' % (setting_id, CO2, TVOC, PM25, TEMP, HUMID, LIGHT)
                     res = requests.get(URL)
-                    print('data db push status code:', res.status_code)
+                    #print('data db push status code:', res.status_code)
 #                     params = {
 #                         "METHOD": "DBINIT",
 #                         "CO2": CO2,
@@ -528,6 +528,11 @@ async def send_sensor_data(ws):
         except Exception as e:
             SERVER_STATUS = False
             print('Sender Error', e)
+            try:
+                msg = '[%s][%s]\nSender Error: %s' % (setting_id, datetime.datetime.today().strftime('%Y-%m-%d %H:%M:%S'), e)
+                await TGBOT.sendMessage(chat_id=chat_id, text=msg)
+            except Exception as e:
+                pass
 
 async def recv_handler(ws):
     global RELAYS_PARAM, SERVER_STATUS, SENSOR_STATUS, ERRORCOUNT
@@ -642,6 +647,12 @@ async def recv_handler(ws):
         except Exception as e:
             SERVER_STATUS = False
             print('Recieve Error', e)
+
+            try:
+                msg = '[%s][%s]\nRecieve Error: %s' % (setting_id, datetime.datetime.today().strftime('%Y-%m-%d %H:%M:%S'), e)
+                await TGBOT.sendMessage(chat_id=chat_id, text=msg)
+            except Exception as e:
+                pass
             
             
 
