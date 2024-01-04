@@ -24,14 +24,14 @@ DIP4_PIN_3 = 20
 COMM_EN_PIN = 23
 
 global Channel, CO2, TVOC, PM25, TEMP, HUMID, LIGHT, WATER1, WATER2, WATER3, RELAYS_PARAM, SERVER_STATUS, SENSOR_STATUS, SERIAL_WATCHDOG, Manual_Relay_Info, Relay_Pins
-Channel = CO2 = TVOC = PM25 = TEMP = HUMID = LIGHT = WATER1 = WATER2 = WATER3 = ERRORCOUNT = 0
+Channel = CO2 = TVOC = PM25 = TEMP = HUMID = LIGHT = WATER1 = WATER2 = WATER3 = ERRORCOUNT = TGBOT = 0
 SERVER_STATUS = True
 SENSOR_STATUS = False
 SERIAL_WATCHDOG = 0
 Manual_Relay_Info = [[False, 0],[False, 0],[False, 0],[False, 0],[False, 0],[False, 0],[False, 0],[False, 0]]
 Relay_Pins = []
 
-VERSION = '4.0'
+VERSION = '4.1'
 
 IS_PI = True
 
@@ -58,6 +58,19 @@ if IS_PI:
             print('This system has no pyautogui module..')
             print('Installing pyautogui module..')
             os.system('pip3 install pyautogui')
+            time.sleep(5)
+            
+    while True:
+        try:
+            import telegram
+            print('telegram import succeed!')
+            TGBOT = telegram.Bot(token='6725689755:AAFecGY3ty3wheg44lR8d-6hO7LIuhAfiao')
+            chat_id = 5391813621
+            break
+        except Exception as e:
+            print('This system has no telegram module..')
+            print('Installing telegram module..')
+            os.system('pip3 install python-telegram-bot')
             time.sleep(5)
 
     GPIO.setmode(GPIO.BCM)
@@ -588,9 +601,13 @@ async def recv_handler(ws):
                 pData = json.dumps(params)
                 await ws.send(pData)
                 await asyncio.sleep(5)
+                msg = '[%s][%s]\nReboot..' % (setting_id, datetime.datetime.today().strftime('%Y-%m-%d %H:%M:%S'))
+                await TGBOT.sendMessage(chat_id=chat_id, text=msg)
                 os.system('shutdown -r now')
             
             elif d['METHOD'] == 'OTA':
+                msg = '[%s][%s]\nUpdating..' % (setting_id, datetime.datetime.today().strftime('%Y-%m-%d %H:%M:%S'))
+                await TGBOT.sendMessage(chat_id=chat_id, text=msg)
                 os.system('wget -P /home/pi/ https://raw.githubusercontent.com/picshbj/ATMOV3/main/main.py')
                 
                 path_src = '/home/pi/main.py'
@@ -607,6 +624,8 @@ async def recv_handler(ws):
                 }
                 pData = json.dumps(params)
                 await ws.send(pData)
+                msg = '[%s][%s]\nUpdate done and reboot..' % (setting_id, datetime.datetime.today().strftime('%Y-%m-%d %H:%M:%S'))
+                await TGBOT.sendMessage(chat_id=chat_id, text=msg)
 
                 subprocess.call(['reboot'])
                     
@@ -620,16 +639,26 @@ async def recv_handler(ws):
 async def main():
     global SERVER_STATUS, ERRORCOUNT
     readParams()
+    msg = '[%s][%s]\nBooting..' % (setting_id, datetime.datetime.today().strftime('%Y-%m-%d %H:%M:%S'))
+    await TGBOT.sendMessage(chat_id=chat_id, text=msg)
     
     while True:
-        print('Updating Relays..')
+        print('Updating Relays..')        
+        msg = '[%s][%s]\nUpdating Relays..' % (setting_id, datetime.datetime.today().strftime('%Y-%m-%d %H:%M:%S'))
+        await TGBOT.sendMessage(chat_id=chat_id, text=msg)
+        
         updateRelay()
         print('Creating a new websockets..')
+        msg = '[%s][%s]\nCreating a new websockets..' % (setting_id, datetime.datetime.today().strftime('%Y-%m-%d %H:%M:%S'))
+        await TGBOT.sendMessage(chat_id=chat_id, text=msg)
+        
         SERVER_STATUS = True
         if ERRORCOUNT > 25:
             subprocess.call(['reboot'])
         else:
             print('ERROR COUNT: %d' % (ERRORCOUNT))
+            msg = '[%s][%s]\nERROR COUNT: %d' % (setting_id, datetime.datetime.today().strftime('%Y-%m-%d %H:%M:%S'), ERRORCOUNT)
+            await TGBOT.sendMessage(chat_id=chat_id, text=msg)
         
         try:
             async with websockets.connect(uri) as ws:
@@ -640,6 +669,8 @@ async def main():
                 )
         except Exception as e:
             print('Main Error:', e)
+            msg = '[%s][%s]\nMain Error: %s' % (setting_id, datetime.datetime.today().strftime('%Y-%m-%d %H:%M:%S'), e)
+            await TGBOT.sendMessage(chat_id=chat_id, text=msg)
             await asyncio.sleep(1)
             ERRORCOUNT += 1
 
