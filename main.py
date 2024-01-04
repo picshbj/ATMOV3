@@ -23,13 +23,15 @@ DIP3_PIN_4 = 26
 DIP4_PIN_3 = 20
 COMM_EN_PIN = 23
 
-global Channel, CO2, TVOC, PM25, TEMP, HUMID, LIGHT, WATER1, WATER2, WATER3, RELAYS_PARAM, SERVER_STATUS, SENSOR_STATUS, SERIAL_WATCHDOG, Manual_Relay_Info, Relay_Pins
+global Channel, CO2, TVOC, PM25, TEMP, HUMID, LIGHT, WATER1, WATER2, WATER3, RELAYS_PARAM, SERVER_STATUS, SENSOR_STATUS, SERIAL_WATCHDOG, Manual_Relay_Info, Relay_Pins, isReadyToSend, ERRORCOUNT, TGBOT, msgToSend
 Channel = CO2 = TVOC = PM25 = TEMP = HUMID = LIGHT = WATER1 = WATER2 = WATER3 = ERRORCOUNT = TGBOT = 0
 SERVER_STATUS = True
 SENSOR_STATUS = False
+isReadyToSend = False
 SERIAL_WATCHDOG = 0
 Manual_Relay_Info = [[False, 0],[False, 0],[False, 0],[False, 0],[False, 0],[False, 0],[False, 0],[False, 0]]
 Relay_Pins = []
+msgToSend = ''
 
 VERSION = '4.2'
 
@@ -446,7 +448,7 @@ def updateRelay():
         print('Update Realy Error:', e)
     
 async def send_sensor_data(ws):
-    global Channel, CO2, TVOC, PM25, TEMP, HUMID, LIGHT, WATER1, WATER2, WATER3, SERVER_STATUS, SENSOR_STATUS, SERIAL_WATCHDOG
+    global Channel, CO2, TVOC, PM25, TEMP, HUMID, LIGHT, WATER1, WATER2, WATER3, SERVER_STATUS, SENSOR_STATUS, SERIAL_WATCHDOG, msgToSend, isReadyToSend
 
     DB_time_check = 0
     WEB_time_check = 0
@@ -458,6 +460,13 @@ async def send_sensor_data(ws):
         await asyncio.sleep(0)
         if not SERVER_STATUS: break
         try:
+            if isReadyToSend:
+                print('[Send Message to server]', msgToSend)
+                await ws.send(msgToSend)
+                isReadyToSend = False
+                msgToSend = ''
+
+
             if time.time() - SERIAL_WATCHDOG > 10.0:
                 SENSOR_STATUS = False
             
@@ -535,7 +544,7 @@ async def send_sensor_data(ws):
                 pass
 
 async def recv_handler(ws):
-    global RELAYS_PARAM, SERVER_STATUS, SENSOR_STATUS, ERRORCOUNT
+    global RELAYS_PARAM, SERVER_STATUS, SENSOR_STATUS, ERRORCOUNT, msgToSend, isReadyToSend
     
     while True:
         if not SERVER_STATUS: break
@@ -565,7 +574,9 @@ async def recv_handler(ws):
                 }
                 pData = json.dumps(params)
                 ERRORCOUNT = 0
-                await ws.send(pData)
+                # await ws.send(pData)
+                msgToSend = pData
+                isReadyToSend = True
                 
             
             elif d['METHOD'] == 'UPT_R':
@@ -597,7 +608,9 @@ async def recv_handler(ws):
                     "VERSION": VERSION
                 }
                 pData = json.dumps(params)
-                await ws.send(pData)
+                # await ws.send(pData)
+                msgToSend = pData
+                isReadyToSend = True
 
             elif d['METHOD'] == 'R_START':
                 params = {
@@ -610,7 +623,10 @@ async def recv_handler(ws):
                     await TGBOT.sendMessage(chat_id=chat_id, text=msg)
                 except Exception as e:
                     pass
-                await ws.send(pData)
+
+                # await ws.send(pData)
+                msgToSend = pData
+                isReadyToSend = True
                 await asyncio.sleep(5)
                 os.system('shutdown -r now')
             
@@ -635,7 +651,11 @@ async def recv_handler(ws):
                     "RESULT": True
                 }
                 pData = json.dumps(params)
-                await ws.send(pData)
+                
+                # await ws.send(pData)
+                msgToSend = pData
+                isReadyToSend = True
+                
                 try:
                     msg = '[%s][%s]\nUpdate done and reboot..' % (setting_id, datetime.datetime.today().strftime('%Y-%m-%d %H:%M:%S'))
                     await TGBOT.sendMessage(chat_id=chat_id, text=msg)
@@ -710,6 +730,7 @@ async def main():
                 await TGBOT.sendMessage(chat_id=chat_id, text=msg)
             except Exception as e:
                 pass
+
             await asyncio.sleep(1)
             ERRORCOUNT += 1
 
