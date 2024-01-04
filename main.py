@@ -674,6 +674,11 @@ async def main():
         
         SERVER_STATUS = True
         if ERRORCOUNT > 25:
+            try:
+                msg = '[%s][%s]\nError occurred. Reboot: %d' % (setting_id, datetime.datetime.today().strftime('%Y-%m-%d %H:%M:%S'), ERRORCOUNT)
+                await TGBOT.sendMessage(chat_id=chat_id, text=msg)
+            except Exception as e:
+                pass
             subprocess.call(['reboot'])
         else:
             print('ERROR COUNT: %d' % (ERRORCOUNT))
