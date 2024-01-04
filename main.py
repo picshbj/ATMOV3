@@ -535,7 +535,7 @@ async def send_sensor_data(ws):
                 relay_time_check = int(time.time())
                 updateRelay()
             
-            if int(time.time()) - ping_pong_time_check >= 15:
+            if int(time.time()) - ping_pong_time_check >= 10:
                 ping_pong_time_check = int(time.time())
                 params = {
                     "METHOD": "PING"
