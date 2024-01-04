@@ -547,7 +547,7 @@ async def recv_handler(ws):
             if 'TIMESTAMP' in d:
                 # time_cmd = "sudo date -s '%s'" % d['TIMESTAMP']
                 # os.system(time_cmd)
-                TIMESTAMP = "'%s'" % d['TIMESTAMP']
+                TIMESTAMP = '%s' % (d['TIMESTAMP'])
                 subprocess.call(['sudo', 'date', '-s', TIMESTAMP])
             
             if d['METHOD'] == 'CALL_A':
