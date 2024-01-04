@@ -549,7 +549,12 @@ async def recv_handler(ws):
     while True:
         if not SERVER_STATUS: break
         try:
-            data = await ws.recv()
+            try:
+                data = await ws.recv()
+            except Exception as e:
+                print('RRRRRRRRR Error:', e)
+                continue
+            
             d = json.loads(data)
             print('recieved:', d)
             
@@ -655,7 +660,7 @@ async def recv_handler(ws):
                 # await ws.send(pData)
                 msgToSend = pData
                 isReadyToSend = True
-                
+
                 try:
                     msg = '[%s][%s]\nUpdate done and reboot..' % (setting_id, datetime.datetime.today().strftime('%Y-%m-%d %H:%M:%S'))
                     await TGBOT.sendMessage(chat_id=chat_id, text=msg)
@@ -667,10 +672,16 @@ async def recv_handler(ws):
 
         except Exception as e:
             SERVER_STATUS = False
-            print('Recieve Error', e)
+            print('Recieve Error:', e)
 
             try:
                 msg = '[%s][%s]\nRecieve Error: %s' % (setting_id, datetime.datetime.today().strftime('%Y-%m-%d %H:%M:%S'), e)
+                await TGBOT.sendMessage(chat_id=chat_id, text=msg)
+            except Exception as e:
+                pass
+
+            try:
+                msg = 'Recieved: %s' % (data)
                 await TGBOT.sendMessage(chat_id=chat_id, text=msg)
             except Exception as e:
                 pass
