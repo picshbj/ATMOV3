@@ -446,6 +446,14 @@ def updateRelay():
         print('-----------------------------------------------------\n')
     except Exception as e:
         print('Update Realy Error:', e)
+
+async def TGMSG(message):
+    try:
+        print(message)
+        msg = '[%s][%s]\n%s' % (setting_id, datetime.datetime.today().strftime('%Y-%m-%d %H:%M:%S'), message)
+        await TGBOT.sendMessage(chat_id=chat_id, text=msg)
+    except Exception as e:
+        print('TGMSG ERROR', e)
     
 async def send_sensor_data(ws):
     global Channel, CO2, TVOC, PM25, TEMP, HUMID, LIGHT, WATER1, WATER2, WATER3, SERVER_STATUS, SENSOR_STATUS, SERIAL_WATCHDOG, msgToSend, isReadyToSend, RECIEVE_WATCHDOG
@@ -460,12 +468,7 @@ async def send_sensor_data(ws):
     while True:
         await asyncio.sleep(0)
         if time.time() - RECIEVE_WATCHDOG > 120.0:
-            try:
-                msg = '[%s][%s]\nRECIEVE_WATCHDOG is over' % (setting_id, datetime.datetime.today().strftime('%Y-%m-%d %H:%M:%S'))
-                await TGBOT.sendMessage(chat_id=chat_id, text=msg)
-            except Exception as e:
-                pass
-
+            TGMSG('RECEIVE_WATCHDOG is over')
             SERVER_STATUS = False
 
         if not SERVER_STATUS: break
@@ -547,12 +550,7 @@ async def send_sensor_data(ws):
                 
         except Exception as e:
             SERVER_STATUS = False
-            print('Sender Error', e)
-            try:
-                msg = '[%s][%s]\nSender Error: %s' % (setting_id, datetime.datetime.today().strftime('%Y-%m-%d %H:%M:%S'), e)
-                await TGBOT.sendMessage(chat_id=chat_id, text=msg)
-            except Exception as e:
-                pass
+            TGMSG('Sender Error: %s' % (e))
 
 async def recv_handler(ws):
     global RELAYS_PARAM, SERVER_STATUS, SENSOR_STATUS, ERRORCOUNT, msgToSend, isReadyToSend, RECIEVE_WATCHDOG
@@ -636,11 +634,7 @@ async def recv_handler(ws):
                     "RESULT": True
                 }
                 pData = json.dumps(params)
-                try:
-                    msg = '[%s][%s]\nReboot..' % (setting_id, datetime.datetime.today().strftime('%Y-%m-%d %H:%M:%S'))
-                    await TGBOT.sendMessage(chat_id=chat_id, text=msg)
-                except Exception as e:
-                    pass
+                TGMSG('Reboot')
 
                 # await ws.send(pData)
                 msgToSend = pData
@@ -649,11 +643,7 @@ async def recv_handler(ws):
                 os.system('shutdown -r now')
             
             elif d['METHOD'] == 'OTA':
-                try:
-                    msg = '[%s][%s]\nUpdating..' % (setting_id, datetime.datetime.today().strftime('%Y-%m-%d %H:%M:%S'))
-                    await TGBOT.sendMessage(chat_id=chat_id, text=msg)
-                except Exception as e:
-                    pass
+                TGMSG('Updating..')
                 os.system('wget -P /home/pi/ https://raw.githubusercontent.com/picshbj/ATMOV3/main/main.py')
                 
                 path_src = '/home/pi/main.py'
@@ -674,11 +664,7 @@ async def recv_handler(ws):
                 msgToSend = pData
                 isReadyToSend = True
 
-                try:
-                    msg = '[%s][%s]\nUpdate done and reboot..' % (setting_id, datetime.datetime.today().strftime('%Y-%m-%d %H:%M:%S'))
-                    await TGBOT.sendMessage(chat_id=chat_id, text=msg)
-                except Exception as e:
-                    pass
+                TGMSG('Update done and reboot..')
 
                 subprocess.call(['reboot'])
             
@@ -688,60 +674,28 @@ async def recv_handler(ws):
 
         except Exception as e:
             SERVER_STATUS = False
-            print('Recieve Error:', e)
-
-            try:
-                msg = '[%s][%s]\nRecieve Error: %s' % (setting_id, datetime.datetime.today().strftime('%Y-%m-%d %H:%M:%S'), e)
-                await TGBOT.sendMessage(chat_id=chat_id, text=msg)
-            except Exception as e:
-                pass
-
-            try:
-                msg = 'Recieved: %s' % (data)
-                await TGBOT.sendMessage(chat_id=chat_id, text=msg)
-            except Exception as e:
-                pass
-            
+            TGMSG('Recieve Error: %s' % e)
+            TGMSG('Recieved: %s' % (data))
             
 
 async def main():
     global SERVER_STATUS, ERRORCOUNT
     readParams()
-    try:
-        msg = '[%s][%s]\nBooting..' % (setting_id, datetime.datetime.today().strftime('%Y-%m-%d %H:%M:%S'))
-        await TGBOT.sendMessage(chat_id=chat_id, text=msg)
-    except Exception as e:
-        pass
+    TGMSG('Booting..')
     
-    while True:
-        print('Updating Relays..')        
-        
-        try:
-            msg = '[%s][%s]\nUpdating Relays..' % (setting_id, datetime.datetime.today().strftime('%Y-%m-%d %H:%M:%S'))
-            await TGBOT.sendMessage(chat_id=chat_id, text=msg)
-        except Exception as e:
-            pass
-        
+    while True:  
+        TGMSG('Updating Relays..')
         updateRelay()
-        print('Creating a new websockets..')
-        
-        try:
-            msg = '[%s][%s]\nCreating a new websockets..' % (setting_id, datetime.datetime.today().strftime('%Y-%m-%d %H:%M:%S'))
-            await TGBOT.sendMessage(chat_id=chat_id, text=msg)
-        except Exception as e:
-            pass
         
         SERVER_STATUS = True
         if ERRORCOUNT > 25:
-            try:
-                msg = '[%s][%s]\nError occurred. Reboot: %d' % (setting_id, datetime.datetime.today().strftime('%Y-%m-%d %H:%M:%S'), ERRORCOUNT)
-                await TGBOT.sendMessage(chat_id=chat_id, text=msg)
-            except Exception as e:
-                pass
+            TGMSG('Error occurred. Reboot: %d' % ERRORCOUNT)
             subprocess.call(['reboot'])
         else:
             print('ERROR COUNT: %d' % (ERRORCOUNT))
         
+
+        TGMSG('Creating a new websockets..')
         try:
             async with websockets.connect(uri) as ws:
                 await asyncio.gather(
@@ -750,13 +704,12 @@ async def main():
                     reader()
                 )
         except Exception as e:
-            print('Main Error:', e)
-            
+            TGMSG('Main Error: %s' % (e))
+
             try:
-                msg = '[%s][%s]\nMain Error: %s' % (setting_id, datetime.datetime.today().strftime('%Y-%m-%d %H:%M:%S'), e)
-                await TGBOT.sendMessage(chat_id=chat_id, text=msg)
+                ws.close()
             except Exception as e:
-                pass
+                TGMSG('Websocket close error: %s' % (e))
 
             await asyncio.sleep(1)
             ERRORCOUNT += 1
