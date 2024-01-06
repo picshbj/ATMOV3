@@ -551,6 +551,8 @@ async def send_sensor_data(ws):
         except Exception as e:
             SERVER_STATUS = False
             await TGMSG('Sender Error: %s' % (e))
+            ws.close()
+            await TGMSG('Websocket Closed!')
 
 async def recv_handler(ws):
     global RELAYS_PARAM, SERVER_STATUS, SENSOR_STATUS, ERRORCOUNT, msgToSend, isReadyToSend, RECIEVE_WATCHDOG
@@ -676,6 +678,8 @@ async def recv_handler(ws):
             SERVER_STATUS = False
             await TGMSG('Recieve Error: %s' % e)
             await TGMSG('Recieved: %s' % (data))
+            ws.close()
+            await TGMSG('Websocket Closed!')
             
 
 async def main():
@@ -705,11 +709,6 @@ async def main():
                 )
         except Exception as e:
             await TGMSG('Main Error: %s' % (e))
-
-            try:
-                ws.close()
-            except Exception as e:
-                await TGMSG('Websocket close error: %s' % (e))
 
             await asyncio.sleep(1)
             ERRORCOUNT += 1
