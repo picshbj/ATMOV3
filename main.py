@@ -468,7 +468,7 @@ async def send_sensor_data(ws):
     while True:
         await asyncio.sleep(0)
         if time.time() - RECIEVE_WATCHDOG > 120.0:
-            TGMSG('RECEIVE_WATCHDOG is over')
+            await TGMSG('RECEIVE_WATCHDOG is over')
             SERVER_STATUS = False
 
         if not SERVER_STATUS: break
@@ -550,7 +550,7 @@ async def send_sensor_data(ws):
                 
         except Exception as e:
             SERVER_STATUS = False
-            TGMSG('Sender Error: %s' % (e))
+            await TGMSG('Sender Error: %s' % (e))
 
 async def recv_handler(ws):
     global RELAYS_PARAM, SERVER_STATUS, SENSOR_STATUS, ERRORCOUNT, msgToSend, isReadyToSend, RECIEVE_WATCHDOG
@@ -634,7 +634,7 @@ async def recv_handler(ws):
                     "RESULT": True
                 }
                 pData = json.dumps(params)
-                TGMSG('Reboot')
+                await TGMSG('Reboot')
 
                 # await ws.send(pData)
                 msgToSend = pData
@@ -643,7 +643,7 @@ async def recv_handler(ws):
                 os.system('shutdown -r now')
             
             elif d['METHOD'] == 'OTA':
-                TGMSG('Updating..')
+                await TGMSG('Updating..')
                 os.system('wget -P /home/pi/ https://raw.githubusercontent.com/picshbj/ATMOV3/main/main.py')
                 
                 path_src = '/home/pi/main.py'
@@ -664,7 +664,7 @@ async def recv_handler(ws):
                 msgToSend = pData
                 isReadyToSend = True
 
-                TGMSG('Update done and reboot..')
+                await TGMSG('Update done and reboot..')
 
                 subprocess.call(['reboot'])
             
@@ -674,28 +674,28 @@ async def recv_handler(ws):
 
         except Exception as e:
             SERVER_STATUS = False
-            TGMSG('Recieve Error: %s' % e)
-            TGMSG('Recieved: %s' % (data))
+            await TGMSG('Recieve Error: %s' % e)
+            await TGMSG('Recieved: %s' % (data))
             
 
 async def main():
     global SERVER_STATUS, ERRORCOUNT
     readParams()
-    TGMSG('Booting..')
+    await TGMSG('Booting..')
     
     while True:  
-        TGMSG('Updating Relays..')
+        await TGMSG('Updating Relays..')
         updateRelay()
         
         SERVER_STATUS = True
         if ERRORCOUNT > 25:
-            TGMSG('Error occurred. Reboot: %d' % ERRORCOUNT)
+            await TGMSG('Error occurred. Reboot: %d' % ERRORCOUNT)
             subprocess.call(['reboot'])
         else:
             print('ERROR COUNT: %d' % (ERRORCOUNT))
         
 
-        TGMSG('Creating a new websockets..')
+        await TGMSG('Creating a new websockets..')
         try:
             async with websockets.connect(uri) as ws:
                 await asyncio.gather(
@@ -704,12 +704,12 @@ async def main():
                     reader()
                 )
         except Exception as e:
-            TGMSG('Main Error: %s' % (e))
+            await TGMSG('Main Error: %s' % (e))
 
             try:
                 ws.close()
             except Exception as e:
-                TGMSG('Websocket close error: %s' % (e))
+                await TGMSG('Websocket close error: %s' % (e))
 
             await asyncio.sleep(1)
             ERRORCOUNT += 1
