@@ -33,7 +33,7 @@ Manual_Relay_Info = [[False, 0],[False, 0],[False, 0],[False, 0],[False, 0],[Fal
 Relay_Pins = []
 msgToSend = ''
 
-VERSION = '4.5'
+VERSION = '4.1'
 
 IS_PI = True
 
@@ -713,6 +713,11 @@ async def main():
             await asyncio.sleep(1)
             ERRORCOUNT += 1
 
-loop = asyncio.get_event_loop()
-loop.run_until_complete(main())
-loop.close()
+while True:
+    try:
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(main())
+        loop.close()
+    except Exception as e:
+        pass
+
