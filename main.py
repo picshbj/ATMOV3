@@ -33,7 +33,7 @@ Manual_Relay_Info = [[False, 0],[False, 0],[False, 0],[False, 0],[False, 0],[Fal
 Relay_Pins = []
 msgToSend = ''
 
-VERSION = '4.1'
+VERSION = '4.2'
 
 IS_PI = True
 
@@ -262,7 +262,7 @@ def saveParams(RELAYS_PARAM):
                     json.loads(RELAYS_PARAM[7])
                     ]
         }
-    with open('./saved3.json', 'w', encoding='utf-8') as make_file:
+    with open('/home/pi/Documents/saved3.json', 'w', encoding='utf-8') as make_file:
         json.dump(params, make_file, indent='\t')
         
 
@@ -270,9 +270,13 @@ def readParams():
     global RELAYS_PARAM
     RELAYS_PARAM = []
     relay_list = [1,2,3,4,5,6,7,8]
-    if os.path.exists('./saved3.json'):
-        with open('./saved3.json', 'r', encoding='utf-8') as read_file:
-            d = json.load(read_file)
+    if os.path.exists('/home/pi/Documents/saved3.json'):
+        with open('/home/pi/Documents/saved3.json', 'r', encoding='utf-8') as read_file:
+            try:
+                d = json.load(read_file)
+	    except Exception as e:
+                print('Read Parameters Error') # 서버에서 설정값 받아와 초기화 하는 루틴 추가할 것
+
             for relay in d['CONTROL']:
                 j = json.dumps(relay)
                 jj = int(json.loads(j)["RELAY"])
@@ -338,10 +342,10 @@ def readParams():
 	]
 }
 '''
-        with open('./saved3.json', 'w', encoding='utf-8') as save_file:
+        with open('/home/pi/Documents/saved3.json', 'w', encoding='utf-8') as save_file:
             save_file.write(pData)
         
-        with open('./saved3.json', 'r', encoding='utf-8') as read_file:
+        with open('/home/pi/Documents/saved3.json', 'r', encoding='utf-8') as read_file:
             d = json.load(read_file)
             for relay in d['CONTROL']:
                 RELAYS_PARAM.append(json.dumps(relay))
@@ -719,5 +723,5 @@ while True:
         loop.run_until_complete(main())
         loop.close()
     except Exception as e:
-        pass
-
+        time.sleep(3)
+        print('Main loop error.. waiting..')
