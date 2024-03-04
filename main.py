@@ -262,7 +262,7 @@ def saveParams(RELAYS_PARAM):
                     json.loads(RELAYS_PARAM[7])
                     ]
         }
-    with open('/home/pi/Documents/saved3.json', 'w', encoding='utf-8') as make_file:
+    with open('./saved3.json', 'w', encoding='utf-8') as make_file:
         json.dump(params, make_file, indent='\t')
         
 
@@ -270,8 +270,8 @@ def readParams():
     global RELAYS_PARAM
     RELAYS_PARAM = []
     relay_list = [1,2,3,4,5,6,7,8]
-    if os.path.exists('/home/pi/Documents/saved3.json'):
-        with open('/home/pi/Documents/saved3.json', 'r', encoding='utf-8') as read_file:
+    if os.path.exists('./saved3.json'):
+        with open('./saved3.json', 'r', encoding='utf-8') as read_file:
             try:
                 d = json.load(read_file)
 	    except Exception as e:
@@ -342,10 +342,10 @@ def readParams():
 	]
 }
 '''
-        with open('/home/pi/Documents/saved3.json', 'w', encoding='utf-8') as save_file:
+        with open('./saved3.json', 'w', encoding='utf-8') as save_file:
             save_file.write(pData)
         
-        with open('/home/pi/Documents/saved3.json', 'r', encoding='utf-8') as read_file:
+        with open('./saved3.json', 'r', encoding='utf-8') as read_file:
             d = json.load(read_file)
             for relay in d['CONTROL']:
                 RELAYS_PARAM.append(json.dumps(relay))
