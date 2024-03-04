@@ -274,7 +274,7 @@ def readParams():
         with open('./saved3.json', 'r', encoding='utf-8') as read_file:
             try:
                 d = json.load(read_file)
-        except Exception as e:
+            except Exception as e:
                 print('Read Parameters Error') # 서버에서 설정값 받아와 초기화 하는 루틴 추가할 것
 
             for relay in d['CONTROL']:
